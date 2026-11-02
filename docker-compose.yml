@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # --- Base de données PostgreSQL ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: aqar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aqar_user
+      # Mot de passe en clair : ASSUME pour cette pile, qui est celle de
+      # DEVELOPPEMENT. Elle ne contient que des donnees de demonstration,
+      # son volume est distinct de celui de production, et un secret
+      # genere ici serait un secret de plus a se transmettre pour rien.
+      #
+      # Ce qui n'est pas assume, c'est de le rendre joignable : la
+      # publication ci-dessous est liee a la boucle locale, comme celle
+      # de la pile de production (BUG-27). Un mot de passe ecrit dans le
+      # depot ET un port ouvert au reseau, c'est la conjonction qui coute
+      # cher.
+      POSTGRES_PASSWORD: aqar_password
+      POSTGRES_DB: aqar_db
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aqar_user -d aqar_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aqar-network
+
+  # --- Application Next.js (Frontend + API) ---
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: development
+    container_name: aqar-frontend
+    restart: unless-stopped
+    # Publication assumee : c'est la pile de DEVELOPPEMENT, on veut
+    # atteindre l'application sans passer par le proxy.
+    #
+    # Elle n'a rien a faire sur une machine deployee, et ce n'est pas
+    # qu'une preference : elle monte la MEME nginx/nginx.conf que la pile
+    # de production, donc les memes limitations de debit et le meme
+    # `proxy_set_header X-Real-IP`. La demarrer a cote de la pile de
+    # production rouvrirait exactement ce que la story 2.1 a ferme la —
+    # les deux projets portent des noms differents et peuvent coexister.
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://aqar_user:aqar_password@postgres:5432/aqar_db
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # Sans ce nom de bucket, le stockage bascule en local : les photos
+      # vivent alors dans le volume uploads_data et non chez Supabase.
+      - SUPABASE_STORAGE_BUCKET=${SUPABASE_STORAGE_BUCKET}
+      # Messagerie. Le conteneur ne lit pas .env : sans ces lignes, SMTP
+      # pouvait etre parfaitement configure sur la machine hote et rester
+      # invisible a l'interieur — aucun email ne serait parti.
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - UPLOAD_DIR=./public/uploads
+      - MAX_FILE_SIZE=5242880
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - uploads_data:/app/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - aqar-network
+
+  # --- Reverse Proxy nginx ---
+  nginx:
+    image: nginx:alpine
+    container_name: aqar-nginx
+    restart: unless-stopped
+    ports:
+      # nginx est le point d'entree : lui seul reste ouvert au reseau.
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # nginx.conf sert /uploads depuis le disque : sans ce montage, la
+      # configuration partagee avec la production repondrait 404 ici.
+      - uploads_data:/var/www/uploads:ro
+    depends_on:
+      - frontend
+    networks:
+      - aqar-network
+
+volumes:
+  # ICI, ILS RESTENT ORDINAIRES — et c'est un choix, pas un oubli.
+  #
+  # `docker-compose.prod.yml` a rendu ses deux volumes `external` le
+  # 17-08-2026 (story 2.7, REP-103) pour que `docker compose down -v` cesse
+  # d'effacer la base. La question s'est donc posee ici, et la reponse est
+  # non, pour deux raisons mesurees :
+  #
+  # 1. Un volume `external` n'est JAMAIS cree par Compose. Mesure :
+  #      external volume "…" not found   -> sortie 1, AUCUN conteneur
+  #    Ce fichier n'a pas de `name:` de projet — le projet vaut donc le nom
+  #    du repertoire, et ses volumes s'appelleraient `aqar_postgres_data` et
+  #    `aqar_uploads_data`. Or `docker volume ls -q | grep '^aqar_'` ne rend
+  #    RIEN : ils n'existent nulle part. Les declarer `external` casserait
+  #    `docker compose up` sur tout poste neuf, des le premier clone.
+  #
+  # 2. Une base de developpement se jette, et c'est ce qu'on attend d'elle.
+  #    La protection de la production existe parce qu'on ne peut pas
+  #    reconstruire ses donnees ; ici, `--profile seed` les refait.
+  #
+  # Si un jour ce fichier gagne un `name:` de projet, cette decision est a
+  # relire : le nom des volumes changerait, et l'argument 1 avec.
+  postgres_data:
+  uploads_data:
+
+networks:
+  aqar-network:
+    driver: bridge

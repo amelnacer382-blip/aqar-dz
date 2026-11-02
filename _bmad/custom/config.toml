@@ -1,0 +1,30 @@
+# Team / enterprise overrides for _bmad/config.toml.
+# Committed to the repo — applies to every developer on the project.
+# Tables deep-merge over base config; keyed entries merge by key.
+# Ce fichier n'est jamais ecrase par l'installeur.
+
+# ─────────────────────────────────────────────────────────────────
+# Emplacement des artefacts de test.
+#
+# L'installeur a bien pris `test_artifacts = docs/qa`, mais il a laisse
+# les trois cles derivees sur `docs/test-artifacts/...`, ce qui creait un
+# second dossier qualite a cote de docs/qa/bug-report.md. On les ramene
+# toutes sous docs/qa : un seul endroit ou chercher l'etat de la qualite.
+# ─────────────────────────────────────────────────────────────────
+[modules.tea]
+test_design_output = "docs/qa/test-design"
+test_review_output = "docs/qa/test-reviews"
+trace_output = "docs/qa/traceability"
+
+# ─────────────────────────────────────────────────────────────────
+# Regles permanentes du projet, injectees dans tous les agents.
+#
+# CLAUDE.md porte ces regles (AGENTS.md, supprime le 12-08-2026, y a ete replie) et reste la
+# source de verite. On les rappelle ici parce qu'un agent BMAD lit sa
+# configuration, pas la racine du depot.
+# ─────────────────────────────────────────────────────────────────
+[agents.bmad-agent-dev]
+description = "Applique sans exception les regles de CLAUDE.md et docs/project-context.md : navbar horizontale (jamais de sidebar), cloisonnement multi-locataire par agencyId sur toute lecture ET toute ecriture, validation Zod via parseForm (jamais de `formData.get(x) as Enum`), aucun secret en dur. Ne passe jamais a l'etape suivante sans validation explicite."
+
+[agents.bmad-agent-architect]
+description = "Connait l'architecture reelle du projet (docs/architecture.md, brownfield) : Next.js 14 App Router, Server Components + Server Actions, Prisma, NextAuth v5 Credentials + bcrypt en strategie JWT. Supabase n'est utilise que comme stockage de fichiers optionnel, jamais comme fournisseur d'authentification. Propose des evolutions qui respectent ce socle plutot que de le remplacer."

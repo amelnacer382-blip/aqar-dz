@@ -1,0 +1,15 @@
+-- L'offre DEMANDEE a l'inscription, distincte de l'offre ATTRIBUEE.
+--
+-- Depend du type "AgencyPlan", cree par 20260815000000_agency_plan_enum.
+-- L'ordre alphabetique des dossiers de migration le garantit.
+--
+-- NULLABLE ET SANS DEFAUT, a dessein. Les agences deja en base n'ont rien
+-- demande : leur poser une valeur inventerait une demande qui n'a jamais eu
+-- lieu, et l'ecran d'approbation de la story 6.3 l'afficherait comme un
+-- choix du client. Un DEFAULT aurait exactement le meme effet sur toute
+-- agence creee ailleurs qu'au formulaire public.
+--
+-- Aucune reprise de donnees : il n'y a rien a reprendre. La colonne `plan`
+-- porte l'offre attribuee et ne bouge pas ici — c'est precisement ce que
+-- FR-5 exige, une demande qui n'accorde rien.
+ALTER TABLE "agencies" ADD COLUMN "requested_plan" "AgencyPlan";

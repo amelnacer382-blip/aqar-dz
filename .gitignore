@@ -1,0 +1,116 @@
+# --- Dépendances ---
+node_modules
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# --- Testing ---
+coverage
+
+# --- Next.js ---
+.next
+out
+
+# --- Production ---
+build
+dist
+
+# --- Environnement ---
+# Toute variante de .env, SAUF l'exemple.
+#
+# La liste nominative precedente ne couvrait pas les variantes qu'on
+# fabrique sans y penser — .env.bak, .env.avant-migration, .env.prod. Un
+# `cp .env .env.bak` versait donc des secrets dans le depot. Constate en
+# faisant exactement cela pendant la story 2.4.
+.env
+.env.*
+!.env.example
+
+# --- Sauvegardes de base ---
+# README documente `pg_dump … > sauvegarde.sql` a la racine du depot. Un
+# `git add -A` y verserait la totalite des donnees : comptes, empreintes
+# de mots de passe, documents, toutes les agences. Meme classe de defaut
+# que les variantes de .env, sur le fichier voisin.
+*.sql
+!prisma/**/*.sql
+
+# --- Boîte d'envoi locale ---
+# Les emails écrits faute de SMTP : ils contiennent des liens de
+# réinitialisation valables une heure. Jamais dans le dépôt.
+.mail
+
+# --- Logs ---
+dev.log
+build.log
+start.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- IDEs ---
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Uploads (dev) ---
+/public/uploads/properties/*
+/public/uploads/agencies/*
+/public/uploads/documents/*
+!/public/uploads/properties/.gitkeep
+!/public/uploads/agencies/.gitkeep
+!/public/uploads/documents/.gitkeep
+
+# --- Prisma ---
+generated
+
+# --- Configuration MCP ---
+# Contient des jetons d'API personnels. Ce fichier a deja fuite une cle
+# Figma dans l'historique du depot (BUG-19) : la retirer du suivi n'a pas
+# suffi, elle y est toujours, et seule sa revocation chez Figma ferme le
+# defaut. Figma est abandonne depuis le 13-08-2026 et il n'y a plus aucune
+# configuration MCP dans ce depot ; la regle reste comme filet si une
+# configuration revient un jour, pour un autre outil.
+mcp-config.json
+
+# --- Marqueur de commit servi ---
+# Grave DANS L'IMAGE par docker/Dockerfile (story 2.8), jamais dans le
+# depot : sa valeur est propre a une construction. Un exemplaire apparait
+# a la racine pendant `npm run test:e2e`, le temps d'eprouver la sonde sur
+# le produit servi ; il est retire par un `afterEach`.
+.commit
+
+# --- Cache incremental TypeScript ---
+# Change a chaque compilation, conflit a chaque fusion, sans valeur pour
+# un autre poste (BUG-31).
+tsconfig.tsbuildinfo
+
+# --- BMAD ---
+# _bmad/ et .claude/skills/ sont VERSIONNES a dessein : un coequipier
+# obtient les memes agents et les memes workflows sans relancer
+# l'installeur — qui a besoin de github.com, injoignable de facon fiable
+# depuis ce reseau. Pour regenerer apres une mise a jour de version :
+#   npx bmad-method install
+#
+# Seuls les fichiers de reponses personnelles restent hors du depot.
+_bmad/config.user.toml
+_bmad/custom/*.user.toml
+.bmad/
+
+# --- Playwright ---
+test-results
+playwright-report
+blob-report
+playwright/.cache
+
+# --- Docker volumes ---
+volumes
+
+# --- Misc ---
+*.log
+.vercel

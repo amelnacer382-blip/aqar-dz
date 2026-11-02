@@ -1,0 +1,367 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Les liens de la barre de navigation sont des ancres : on y glisse. */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* La barre fixe ne doit pas recouvrir le titre de la section visee. */
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+
+  /* Le focus doit rester visible au clavier sur toutes les surfaces. */
+  :focus-visible {
+    outline: 2px solid #1e5f74;
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: #dde9ec;
+    color: #12212b;
+  }
+}
+
+@layer components {
+  /**
+   * ARCHE — l'element signature.
+   *
+   * Reprend l'arc outrepasse des patios de la Casbah : la courbe deborde
+   * legerement du demi-cercle, si bien que la forme est plus large a
+   * mi-hauteur qu'a sa base. On l'applique aux visuels, aux vignettes de
+   * biens et aux etats vides, jamais en simple decoration.
+   */
+  .arch {
+    border-top-left-radius: 50% 32%;
+    border-top-right-radius: 50% 32%;
+  }
+
+  .arch-full {
+    border-radius: 50% 50% 0.75rem 0.75rem / 42% 42% 0.75rem 0.75rem;
+  }
+
+  /**
+   * Badigeon de chaux : un grain tres leger evite l'aplat numerique parfait
+   * des fonds unis, comme un mur peint a la chaux.
+   */
+  .limewash {
+    background-color: #f4f5f3;
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(30, 95, 116, 0.045), transparent 42%),
+      radial-gradient(circle at 88% 6%, rgba(200, 137, 47, 0.05), transparent 38%);
+  }
+
+  /**
+   * Claustra : la trame geometrique des moucharabiehs, en filigrane.
+   * Sert d'ancrage visuel sur les grands aplats sombres.
+   */
+  .claustra {
+    background-image:
+      linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.05) 75%),
+      linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 22px 22px;
+    background-position: 0 0, 11px 11px;
+  }
+
+  /**
+   * Voile de lecture sur une photo : lisible sans eteindre l'image.
+   *
+   * Sur mobile le texte occupe toute la largeur et passerait sur les zones
+   * claires de la photo : le voile y est donc quasi uniforme. A partir du
+   * grand ecran, le texte tient dans la colonne de gauche et le degrade
+   * laisse la moitie droite de l'image a decouvert.
+   */
+  .photo-scrim {
+    background: linear-gradient(
+      to bottom,
+      rgba(18, 33, 43, 0.88) 0%,
+      rgba(18, 33, 43, 0.78) 60%,
+      rgba(18, 33, 43, 0.86) 100%
+    );
+  }
+
+  @media (min-width: 1024px) {
+    .photo-scrim {
+      background: linear-gradient(
+        to right,
+        rgba(18, 33, 43, 0.94) 0%,
+        rgba(18, 33, 43, 0.82) 42%,
+        rgba(18, 33, 43, 0.38) 72%,
+        rgba(18, 33, 43, 0.22) 100%
+      );
+    }
+  }
+
+  .photo-scrim-bottom {
+    background: linear-gradient(
+      to top,
+      rgba(18, 33, 43, 0.9) 0%,
+      rgba(18, 33, 43, 0.55) 38%,
+      rgba(18, 33, 43, 0.12) 100%
+    );
+  }
+
+  /**
+   * Reflet au survol : une lumiere traverse la surface une fois, de gauche
+   * a droite. Reserve aux boutons d'action principaux — partout ailleurs il
+   * ferait du bruit. Le reflet reste contenu dans le bouton (overflow).
+   */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.28) 50%,
+      transparent 62%
+    );
+    transform: translateX(-130%);
+    transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sheen:hover::after {
+    transform: translateX(130%);
+  }
+
+  /* Elevation au survol : la carte se souleve, elle ne grossit pas. */
+  .lift {
+    transition:
+      transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.3s ease;
+  }
+
+  .lift:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 48px -28px rgba(18, 33, 43, 0.5);
+  }
+
+  /**
+   * Trame technique du heros : une grille reguliere, comme le quadrillage
+   * d'un tableau de bord. Elle s'efface vers les bords pour ne pas encadrer
+   * la page. C'est le fond d'un outil, pas d'une carte postale.
+   */
+  .tech-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 65% at 50% 40%, #000 35%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 65% at 50% 40%, #000 35%, transparent 100%);
+  }
+
+  /**
+   * Meme quadrillage que le heros, mais trace a l'encre pour les surfaces
+   * claires. Il s'efface vers les bords : la trame doit se deviner, pas
+   * encadrer la section.
+   */
+  .grid-ink {
+    background-image:
+      linear-gradient(rgba(18, 33, 43, 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(18, 33, 43, 0.055) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse 75% 80% at 50% 50%, #000 15%, transparent 100%);
+    mask-image: radial-gradient(ellipse 75% 80% at 50% 50%, #000 15%, transparent 100%);
+  }
+
+  /**
+   * Trame pointillee : meme famille que les quadrillages du heros et de la
+   * section couverture, autre instrument. Elle donne du grain a un mur
+   * blanc sans y tracer de lignes, qui entreraient en concurrence avec les
+   * bords des tuiles.
+   */
+  .dot-grid {
+    background-image: radial-gradient(rgba(18, 33, 43, 0.09) 1px, transparent 1px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, #000 10%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, #000 10%, transparent 100%);
+  }
+
+  /* Filet decoratif reprenant la frise des zelliges. */
+  .zellige-rule {
+    height: 3px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      #1e5f74 0 10px,
+      #c8892f 10px 14px,
+      transparent 14px 24px
+    );
+  }
+}
+
+/*
+ * L'ENTREE DU PREMIER ECRAN SE FAIT EN CSS, PAS EN JAVASCRIPT.
+ *
+ * Story 3.14, REP-107. Framer ecrit les valeurs de `initial` dans le style
+ * rendu par le serveur : tant que le heros les utilisait, la page d'accueil
+ * etait livree avec 34 elements a `opacity: 0`, et n'apparaissait qu'une
+ * fois le script execute. Mesure du 17-08-2026, Lighthouse mobile bride :
+ * LCP 3,459 s pour un TTI de 3,459 s — la meme milliseconde. La page ne
+ * s'affichait pas tant qu'elle n'etait pas interactive.
+ *
+ * LA REGLE POSEE : on n'anime pas l'entree de ce qui est DEJA a l'ecran ;
+ * on anime l'entree de ce qui y ARRIVE. Les sections d'en dessous gardent
+ * donc leurs animations Framer (`Reveal`, `Stagger`, declenchees par
+ * `whileInView`) : elles ne peuvent pas retarder un affichage qu'on ne
+ * regarde pas encore. Seul le premier ecran change de moteur.
+ *
+ * REGLE 8 (§12) EST TENUE : Framer Motion reste la bibliotheque
+ * d'animation du produit — defilement, parallaxe, compteurs, apparitions au
+ * defilement. Ce qui change ici est le MOMENT d'une seule sequence, pas
+ * l'outil. Aucune animation ne peut demarrer avant l'hydratation si elle
+ * depend d'un script : c'est une contrainte du navigateur, pas un choix.
+ *
+ * La courbe est celle de `EASE` dans `components/motion/primitives.tsx`
+ * — cubic-bezier(0.16, 1, 0.3, 1) — pour que les deux moteurs rendent le
+ * meme mouvement.
+ */
+@keyframes aqar-entree {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entree {
+  animation: aqar-entree 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+ * La ligne de titre monte sous son masque. Le parent porte
+ * `overflow-hidden` ; seule la translation change, jamais l'opacite —
+ * c'est ce qui donne le mouvement de rideau.
+ */
+@keyframes aqar-entree-masque {
+  from {
+    transform: translateY(115%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.entree-masque {
+  animation: aqar-entree-masque 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+ * La barre d'un graphique qui pousse depuis zero.
+ *
+ * Un seul jalon : le `to` implicite est la hauteur calculee de l'element,
+ * posee en style en ligne. `both` applique donc le `from` (hauteur nulle)
+ * pendant le delai, puis laisse l'element a sa hauteur reelle.
+ */
+@keyframes aqar-entree-hauteur {
+  from {
+    height: 0;
+  }
+}
+
+.entree-hauteur {
+  animation: aqar-entree-hauteur 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* La vignette qui se pose : meme mouvement, avec une mise a l'echelle. */
+@keyframes aqar-entree-pose {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entree-pose {
+  animation: aqar-entree-pose 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Personne ne doit subir le mouvement : on le coupe si le systeme le demande. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    /*
+      LE DELAI AUSSI, et il manquait. Avec `animation-fill-mode: both`, un
+      delai de 0,6 s laisse l'element a son etat de depart — donc
+      transparent — pendant 0,6 s avant de sauter a l'arrivee. Couper la
+      duree sans couper le delai ne supprime pas le mouvement : il le
+      remplace par une attente.
+    */
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

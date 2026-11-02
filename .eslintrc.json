@@ -1,0 +1,24 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.object.property.name=/^(property|client|owner)$/][callee.property.name=/^delete(Many)?$/]",
+        "message": "Property, Client et Owner sont a corbeille : posez `deletedAt` par un `update`. Un `delete()` — ET un `deleteMany()`, meme effet — y est definitif et EN CASCADE : `npm run audit:cascades` dit ce qui tombe (11 tables). REP-99, eprouve le 15-08-2026 : un `client.deleteMany()` a emporte une location et ses quittances. Seule exception : app/agency/trash/page.tsx."
+      },
+      {
+        "selector": "CallExpression[callee.object.property.name=/^(property|client|owner)$/][callee.property.name=/^findUnique(OrThrow)?$/]",
+        "message": "Le filtre de corbeille de lib/prisma.ts ne couvre pas `findUnique` : Prisma n'accepte que des champs uniques dans son `where`. Utilisez `findFirst`, qui est couvert — et qui accepte le `agencyId` du cloisonnement (CLAUDE.md §5)."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["tests/**"],
+      "rules": {
+        "no-restricted-syntax": "off"
+      }
+    }
+  ]
+}

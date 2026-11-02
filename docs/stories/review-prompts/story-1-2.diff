@@ -1,0 +1,254 @@
+diff --git a/app/api/auth/register/route.ts b/app/api/auth/register/route.ts
+index e83ecf3..aab445f 100644
+--- a/app/api/auth/register/route.ts
++++ b/app/api/auth/register/route.ts
+@@ -3,17 +3,22 @@ import { hash } from "bcryptjs"
+ import { prisma } from "@/lib/prisma"
+ import { z } from "zod"
+ import { slugify } from "@/lib/format"
++import { registerSchema } from "@/lib/validations"
+ import { ipFromHeader, rateLimit, retryMessage } from "@/lib/rate-limit"
+ import { notifyPlatformOfSignup } from "@/lib/notifications"
+ 
+-const registerSchema = z.object({
+-  agencyName: z.string().min(2, "Le nom de l'agence est requis"),
+-  email: z.string().email("Email invalide"),
+-  phone: z.string().optional(),
+-  wilaya: z.string().min(1, "La wilaya est requise"),
+-  address: z.string().optional(),
+-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+-})
++/**
++ * Le schema vient de lib/validations, il n'est plus redefini ici.
++ *
++ * Cette route en portait une copie locale, et c'etait elle qui tournait :
++ * celle de lib/validations n'etait importee nulle part. Corriger la
++ * seconde sans brancher la premiere n'aurait donc rien change a
++ * l'execution — c'est exactement ainsi que la normalisation des emails a
++ * pu manquer ici alors qu'elle existait deja ailleurs dans le fichier de
++ * schemas.
++ *
++ * `z` reste importe : le bloc catch teste `error instanceof z.ZodError`.
++ */
+ 
+ /**
+  * Cinq inscriptions par heure et par adresse.
+diff --git a/app/auth/forgot/actions.ts b/app/auth/forgot/actions.ts
+index 8ee3433..2a98494 100644
+--- a/app/auth/forgot/actions.ts
++++ b/app/auth/forgot/actions.ts
+@@ -7,8 +7,13 @@ import { appUrl, mailerConfigured } from "@/lib/mailer"
+ import { sendPasswordResetEmail } from "@/lib/notifications"
+ import { callerIp, rateLimit } from "@/lib/rate-limit"
+ 
++// Meme normalisation que loginSchema : sans le `.toLowerCase()`, la
++// recherche du compte echouerait pour une simple majuscule et
++// l'utilisateur attendrait un email qui ne partirait jamais — l'ecran
++// repondant volontairement la meme chose dans tous les cas, rien ne le
++// lui dirait.
+ const schema = z.object({
+-  email: z.string().trim().email(),
++  email: z.string().trim().toLowerCase().email(),
+ })
+ 
+ export type ForgotResult = {
+diff --git a/lib/validations/index.ts b/lib/validations/index.ts
+index e49b949..1e8a32d 100644
+--- a/lib/validations/index.ts
++++ b/lib/validations/index.ts
+@@ -156,14 +156,33 @@ const optionalRating = z.preprocess(
+ // AUTH
+ // ==========================================
+ 
++/**
++ * Adresse email servant d'identifiant de connexion.
++ *
++ * Normalisee des l'entree, et c'est la seule facon qui tienne : la
++ * contrainte @unique de PostgreSQL est sensible a la casse, donc
++ * `Contact@ImmoAlger.dz` et `contact@immoalger.dz` y sont deux lignes
++ * distinctes. Une agence qui s'inscrivait avec la casse de ses cartes de
++ * visite se retrouvait enfermee dehors des qu'un collegue tapait
++ * l'adresse en minuscules — et « mot de passe oublie » ne la sortait pas
++ * de la, puisqu'il repond volontairement la meme chose que le compte
++ * existe ou non.
++ *
++ * Effet de bord voulu : les compteurs de limitation de debit qui prennent
++ * l'email pour cle (`login:compte:`, `explication:compte:`, `oubli:compte:`)
++ * deviennent insensibles a la casse eux aussi. Sans cela, faire varier une
++ * majuscule offrait un budget de tentatives neuf a chaque fois.
++ */
++const identityEmail = z.string().trim().toLowerCase().email("Email invalide")
++
+ export const loginSchema = z.object({
+-  email: z.string().email("Email invalide"),
++  email: identityEmail,
+   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caracteres"),
+ })
+ 
+ export const registerSchema = z.object({
+   agencyName: z.string().trim().min(2, "Le nom de l'agence est requis"),
+-  email: z.string().email("Email invalide"),
++  email: identityEmail,
+   phone: z.string().optional(),
+   wilaya: z.string().trim().min(1, "La wilaya est requise"),
+   address: z.string().optional(),
+diff --git a/prisma/migrations/20260810000000_normalize_user_emails/migration.sql b/prisma/migrations/20260810000000_normalize_user_emails/migration.sql
+new file mode 100644
+index 0000000..620876a
+--- /dev/null
++++ b/prisma/migrations/20260810000000_normalize_user_emails/migration.sql
+@@ -0,0 +1,61 @@
++-- Normalise les adresses email deja en base : minuscules, sans espaces de bord.
++--
++-- Le code normalise desormais toute adresse a l'entree. Sans ce rattrapage,
++-- les comptes crees AVANT la correction deviendraient definitivement
++-- inaccessibles : la connexion chercherait `contact@immoalger.dz` pendant que
++-- la ligne porte encore `Contact@ImmoAlger.dz`. Le defaut serait aggrave par
++-- son propre correctif.
++--
++-- Les deux tables sont traitees : `users.email` et `agencies.email` sont
++-- toutes deux @unique, et la route d'inscription y ecrit la meme valeur.
++--
++-- Les collisions ne sont PAS resolues automatiquement. Deux lignes qui se
++-- replient sur la meme adresse sont deux comptes distincts, avec chacun leur
++-- historique : choisir lequel survit est une decision humaine. La migration
++-- s'arrete en les listant plutot que de heurter la contrainte d'unicite avec
++-- un message que personne ne sait lire.
++
++DO $$
++DECLARE
++  conflits_users    text;
++  conflits_agencies text;
++  corriges_users    integer;
++  corriges_agencies integer;
++BEGIN
++  SELECT string_agg(norme, ', ' ORDER BY norme) INTO conflits_users
++  FROM (
++    SELECT lower(btrim(email)) AS norme
++    FROM users
++    GROUP BY 1
++    HAVING count(*) > 1
++  ) c;
++
++  SELECT string_agg(norme, ', ' ORDER BY norme) INTO conflits_agencies
++  FROM (
++    SELECT lower(btrim(email)) AS norme
++    FROM agencies
++    GROUP BY 1
++    HAVING count(*) > 1
++  ) c;
++
++  -- Les deux controles sont faits AVANT toute ecriture, et les deux listes
++  -- sont rapportees ensemble : corriger users pour rejouer et decouvrir
++  -- ensuite un conflit sur agencies ferait perdre un aller-retour.
++  IF conflits_users IS NOT NULL OR conflits_agencies IS NOT NULL THEN
++    RAISE EXCEPTION E'Normalisation impossible : des adresses entrent en collision une fois mises en minuscules.\n  users    : %\n  agencies : %\nFusionnez ou supprimez les comptes concernes, puis rejouez la migration.',
++      coalesce(conflits_users, '(aucune)'),
++      coalesce(conflits_agencies, '(aucune)');
++  END IF;
++
++  UPDATE users
++  SET email = lower(btrim(email))
++  WHERE email <> lower(btrim(email));
++  GET DIAGNOSTICS corriges_users = ROW_COUNT;
++
++  UPDATE agencies
++  SET email = lower(btrim(email))
++  WHERE email <> lower(btrim(email));
++  GET DIAGNOSTICS corriges_agencies = ROW_COUNT;
++
++  RAISE NOTICE 'Emails normalises — users : %, agencies : %', corriges_users, corriges_agencies;
++END $$;
+diff --git a/tests/regression.spec.ts b/tests/regression.spec.ts
+index 76cd2b1..f7ac889 100644
+--- a/tests/regression.spec.ts
++++ b/tests/regression.spec.ts
+@@ -171,3 +171,88 @@ test.describe("Super admin", () => {
+     await expect(page.getByRole("heading", { name: /Paramètres plateforme/i })).toBeVisible()
+   })
+ })
++
++/**
++ * BUG-01 — l'adresse email etait sensible a la casse.
++ *
++ * Ces trois cas echouent si la normalisation est retiree de
++ * `identityEmail` (lib/validations/index.ts) ou si la route d'inscription
++ * reprend un schema local. C'est le filet demande par la story 1.2.
++ */
++test.describe("Normalisation des adresses email (BUG-01)", () => {
++  test("la connexion accepte n'importe quelle casse", async ({ page }) => {
++    for (const saisie of ["admin@aqar.dz", "ADMIN@AQAR.DZ", "Admin@Aqar.Dz"]) {
++      await login(page, saisie)
++      expect(page.url()).toContain("/agency")
++
++      await page.goto(`${BASE}/api/auth/signout`)
++      await page.getByRole("button", { name: /Sign out|Déconnexion/i }).click()
++      await page.waitForLoadState("networkidle")
++    }
++  })
++
++  test("l'inscription enregistre en minuscules et refuse le doublon de casse", async ({
++    request,
++  }) => {
++    // Adresse unique : ce test cree reellement une agence en attente.
++    const unique = `casse-${Date.now()}`
++    const inscription = (email: string) =>
++      request.post(`${BASE}/api/auth/register`, {
++        data: {
++          agencyName: `Agence ${unique}`,
++          email,
++          wilaya: "Alger",
++          password: "password123",
++        },
++      })
++
++    const premiere = await inscription(`  Test.${unique}@Exemple.DZ  `)
++    expect(premiere.status()).toBe(200)
++
++    // Meme adresse, casse differente : refus explicite, jamais une 500.
++    const doublon = await inscription(`TEST.${unique}@EXEMPLE.dz`)
++    expect(doublon.status()).toBe(400)
++    expect((await doublon.json()).error).toContain("Cet email est déjà utilisé")
++  })
++
++  test("le compte cree est retrouve par son adresse en minuscules", async ({ page }) => {
++    const unique = `retrouve-${Date.now()}`
++    const reponse = await page.request.post(`${BASE}/api/auth/register`, {
++      data: {
++        agencyName: `Agence ${unique}`,
++        email: ` Contact.${unique}@ImmoAlger.DZ `,
++        wilaya: "Oran",
++        password: "password123",
++      },
++    })
++    expect(reponse.status()).toBe(200)
++
++    // La nouvelle agence est en attente d'activation : la connexion echoue,
++    // mais le MOTIF prouve que le compte a ete retrouve et le mot de passe
++    // valide — donc que la ligne est bien stockee en minuscules.
++    await page.goto(`${BASE}/auth/login`)
++    await page.fill("#email", `contact.${unique}@immoalger.dz`)
++    await page.fill("#password", "password123")
++    await page.click('button[type="submit"]')
++    await page.waitForLoadState("networkidle")
++
++    await expect(page.getByText(/agence n'est pas encore activée/i)).toBeVisible({
++      timeout: 30000,
++    })
++  })
++
++  test("mot de passe oublié accepte une autre casse", async ({ page }) => {
++    await page.goto(`${BASE}/auth/forgot`)
++    await page.fill("#email", "ADMIN@AQAR.DZ")
++    await page.click('button[type="submit"]')
++    await page.waitForLoadState("networkidle")
++
++    // La reponse est volontairement identique que le compte existe ou non :
++    // l'ecran ne peut donc pas prouver la normalisation. Il prouve seulement
++    // que le chemin ne casse pas. La creation reelle du jeton est verifiee
++    // en base (voir Debug Log de la story).
++    await expect(page.getByText(/lien de réinitialisation vient d'être envoyé/i)).toBeVisible({
++      timeout: 30000,
++    })
++  })
++})

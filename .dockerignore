@@ -1,0 +1,60 @@
+# ==========================================
+# Contexte de build Docker
+# ==========================================
+# Sans ce fichier, `docker build` envoie au démon tout le dossier :
+# node_modules, .next, .git et les uploads locaux, soit plusieurs
+# centaines de mégaoctets recopiés à chaque construction. Pire, un .env
+# présent sur la machine se retrouverait dans une couche de l'image.
+
+# --- Dépendances et artefacts de build ---
+node_modules
+.next
+out
+build
+dist
+tsconfig.tsbuildinfo
+
+# --- Secrets ---
+# Les variables sont injectées à l'exécution par docker-compose, jamais
+# gravées dans l'image.
+.env
+.env.*
+!.env.example
+
+# --- Historique et outillage ---
+.git
+.gitignore
+.github
+.vscode
+.idea
+
+# --- Tests ---
+tests
+playwright.config.ts
+playwright-report
+test-results
+blob-report
+playwright/.cache
+coverage
+
+# --- Marqueur de commit servi ---
+# L'étage `production` le grave lui-même à partir de l'ARG COMMIT_SHA
+# (story 2.8). Un exemplaire traînant sur le poste — les tests en écrivent
+# un le temps d'éprouver la sonde — n'a rien à faire dans le contexte : il
+# porterait un autre commit que celui qu'on construit.
+.commit
+
+# --- Fichiers produits à l'exécution ---
+# Les uploads vivent dans un volume, pas dans l'image : les y inclure
+# ferait réapparaître d'anciennes photos à chaque redéploiement.
+public/uploads/properties/*
+public/uploads/agencies/*
+public/uploads/documents/*
+.mail
+
+# --- Documentation et divers ---
+*.md
+!README.md
+mcp-config.json
+*.log
+.DS_Store

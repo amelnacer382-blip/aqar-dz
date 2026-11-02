@@ -1,0 +1,1142 @@
+# Suivi de sprint — Aqar DZ
+#
+# Généré à partir de docs/epics.md : 7 épopées, 63 stories, issues de
+# l'audit de code (38 défauts), du bilan de santé du 9 août 2026, et — pour
+# l'épopée 6 seule — d'un PRD de fonctionnalité.
+# (« 54 stories » et « 36 défauts » ont été corrigés le 17-08-2026 : les
+# décomptes recalculés ci-dessous les démentaient depuis le 16-08, et
+# l'en-tête ne les avait pas suivis. C'est exactement REP-74, à l'endroit
+# même qui le décrit.)
+#
+# DÉCOMPTES RECALCULÉS le 15-08-2026, commandes à l'appui. Ils l'avaient
+# déjà été le 14-08 ; l'en-tête d'origine annonçait « 37 stories » et
+# « 33 défauts », deux chiffres faux recopiés depuis la génération initiale
+# (la famille de REP-74, story 5.11) :
+# RECALCULÉS À NOUVEAU le 16-08-2026 : 54 était juste le 15-08 et ne l'est
+# plus. L'écart est de DEUX, et ce sont les stories 6.6 et 6.7 — toutes deux
+# nées de l'inventaire des arguments de vente, qui a trouvé REP-101 et
+# corrigé REP-100. Vérifié plutôt que supposé : le premier jet de cette
+# note accusait 4.7, alors que `git log -S` la date de 9d79fbc, bien avant
+# le décompte du 15-08. Les deux sources concordent toujours.
+#   diff <(git show 0ad8c4b:…/sprint-status.yaml | grep -oE '^  [0-9]+-[0-9]+[a-z0-9-]*:' | sort) \
+#        <(grep -oE '^  [0-9]+-[0-9]+[a-z0-9-]*:' …/sprint-status.yaml | sort)   -> 6-6, 6-7
+# RECALCULÉS UNE TROISIÈME FOIS le 16-08-2026, plus tard le même jour :
+# la story 2.6 est née d'une PANNE EN FONCTIONNEMENT (BUG-37), et elle fait
+# bouger les deux décomptes à la fois — 56 -> 57 stories, 36 -> 37 défauts.
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 57
+#   grep -cE '^### Story ' docs/epics.md                              -> 57
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 37
+# RECALCULÉS UNE QUATRIÈME FOIS le 17-08-2026 : DEUX stories sont nées ce
+# jour-là, et aucune d'une lecture. La 2.7 d'un arbitrage refusé pendant la
+# 2.6 — je demandais la permission d'un risque au lieu de le supprimer
+# (REP-103). La 2.8 d'un refus de marquer REP-96 « résolu » alors que la 2.6
+# ne l'avait que rétréci : la sonde voit l'écart de migrations, pas l'écart
+# de commit. 57 -> 59 stories ; les défauts ne bougent pas, ce n'en sont pas.
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 59
+#   grep -cE '^### Story ' docs/epics.md                              -> 59
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 37
+# RECALCULÉS UNE CINQUIÈME FOIS le 17-08-2026 : la story 4.8 est née d'une
+# MESURE, pas d'une lecture — les neuf actions de création neutralisées
+# ensemble, six modules sur neuf passant inaperçus (REP-104). 59 -> 60
+# stories ; les défauts ne bougent pas, et cette fois c'est un résultat et
+# non un hasard : les six modules éprouvés FONCTIONNENT.
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 60
+#   grep -cE '^### Story ' docs/epics.md                              -> 60
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 37
+# RECALCULÉS UNE SIXIÈME FOIS le 17-08-2026, et les DEUX décomptes bougent.
+# BUG-38 : le balayage exigé par l'AC-3 de la story 3.2 a trouvé six sites
+# de plus du même défaut, dont deux sur la vitrine PUBLIQUE. 37 -> 38.
+# Story 3.12 : ouverte par l'AC-2 de la story 3.4, dont le scénario — 50
+# agences de 2 000 biens — fait dépasser au plan du site la limite des
+# moteurs (REP-105). 60 -> 61. Aucune des deux ne vient d'une lecture : une
+# story a fait son travail, deux fois.
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 61
+#   grep -cE '^### Story ' docs/epics.md                              -> 61
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 38
+# RECALCULÉS UNE SEPTIÈME FOIS le 17-08-2026 : 61 -> 62. Story 3.13,
+# ouverte par la mesure de la story 3.5 — `npm run audit:cascades` recense
+# 11 suppressions en cascade, et le bouton « Détruire » qui les déclenche ne
+# demande AUCUNE confirmation (REP-106). Troisième fois de suite qu'une
+# story ouvre la suivante par ce qu'elle mesure, et non par ce qu'elle lit.
+# Les défauts ne bougent pas, et c'est un choix argumenté : REP-106 n'a
+# jamais été observé en fonctionnement, l'inscrire en BUG-nn gonflerait le
+# décompte d'une affirmation non mesurée (§7).
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 62
+#   grep -cE '^### Story ' docs/epics.md                              -> 62
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 38
+# RECALCULÉS UNE HUITIÈME FOIS le 17-08-2026, après la story 3.10 :
+# INCHANGÉS — 7 / 62 / 62 / 38. Et c'est un résultat, pas une formalité :
+# c'est la DEUXIÈME story de suite qui n'ouvre ni story ni défaut, après
+# trois qui en ouvraient chacune une. Elle a soldé six constats reportés
+# (REP-03 à 07 et 14) sans en produire un seul, ce qui est la forme que
+# doit prendre une story de dette.
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 62
+#   grep -cE '^### Story ' docs/epics.md                              -> 62
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 38
+# RECALCULÉS UNE NEUVIÈME FOIS le 17-08-2026, après la story 3.12 :
+# INCHANGÉS — 7 / 62 / 62 / 38. TROISIÈME story de suite sans rien ouvrir.
+# Elle a trouvé un défaut latent en chemin — le sérialiseur de Next
+# n'échappe pas les URL — et ne l'a PAS inscrit : mesuré, il ne peut pas se
+# déclencher aujourd'hui (le slug est contraint à ^[a-z0-9-]{3,40}$). Même
+# arbitrage que `metadataBase` en 3.6, pour la même raison (§7).
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 62
+#   grep -cE '^### Story ' docs/epics.md                              -> 62
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 38
+# RECALCULÉS UNE DIXIÈME FOIS le 17-08-2026, après la story 3.13 :
+# INCHANGÉS — 7 / 62 / 62 / 38. QUATRIÈME story de suite sans rien ouvrir.
+# C'est désormais un état, plus une série : l'épopée 3 solde des constats
+# reportés au lieu d'en produire.
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 62
+#   grep -cE '^### Story ' docs/epics.md                              -> 62
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 38
+# RECALCULÉS UNE ONZIÈME FOIS le 17-08-2026, après la story 3.7 :
+# 62 -> 63 stories. La série de quatre s'arrête, et pour une bonne raison :
+# la 3.7 a MESURÉ ce qu'elle a ouvert. Son travail sur les images ne
+# déplaçait pas le LCP de l'accueil ; la mesure directe a dit pourquoi — ce
+# LCP n'est pas une image (REP-107, story 3.14). Les défauts ne bougent pas
+# et c'est un choix : une lenteur mesurée n'est pas une perte de données, et
+# le registre des BUG-nn n'en accueille pas.
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 63
+#   grep -cE '^### Story ' docs/epics.md                              -> 63
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 38
+# RECALCULÉS UNE DOUZIÈME FOIS le 17-08-2026, après la story 3.14 :
+# INCHANGÉS — 7 / 63 / 63 / 38. Elle a soldé le constat que la 3.7 avait
+# ouvert, sans rien ouvrir elle-même. L'épopée 3 n'a plus que DEUX stories
+# ouvertes, et les deux relèvent de l'éditeur : 3.8 (migrations) et 3.11
+# (base de production).
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 63
+#   grep -cE '^### Story ' docs/epics.md                              -> 63
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 38
+# RECALCULÉS UNE TREIZIÈME FOIS le 18-08-2026, après la story 3.11 :
+# 7 / 63 / 63 / 38 -> 40. LES DÉFAUTS BOUGENT, LES STORIES NON, et les deux
+# nouveaux ont été trouvés EN INSTRUISANT un constat reporté :
+#   BUG-39 — le propriétaire d'une vente posé par un POST sans contrôle
+#            d'agence. Une fuite inter-agences, sur la propriété que
+#            architecture.md §3 appelle « la plus critique du système ».
+#            Reproduit par rejeu, pas déduit.
+#   BUG-40 — une date qui recule d'un jour à l'enregistrement. Trouvé par
+#            un TEST ROUGE d'un tout autre sujet, à 00 h 35 locale.
+# Les deux sont portés par la story 3.11 : aucune story ouverte pour eux.
+#   grep -cE '^  epic-[0-9]+:' docs/stories/sprint-status.yaml        -> 7
+#   grep -cE '^  [0-9]+-[0-9]+[a-z0-9-]*:' docs/stories/sprint-status.yaml -> 63
+#   grep -cE '^### Story ' docs/epics.md                              -> 63
+#   grep -c '^<a id="bug-' docs/qa/bug-report.md                      -> 40
+# Les deux sources de stories concordent. Ce n'est PAS la story 5.11 qui
+# est faite pour autant : elle porte les décomptes des autres documents.
+# Régénérer ou rafraîchir avec le skill `bmad-sprint-planning`.
+# Consulter l'état avec `bmad-sprint-status`.
+#
+# STATUTS D'ÉPOPÉE :  backlog | in-progress | done
+# STATUTS DE STORY :  backlog | ready-for-dev | in-progress | review | done
+# RÉTROSPECTIVE    :  optional | done
+#
+# Cycle attendu pour chaque story :
+#   bmad-create-story  →  bmad-dev-story  →  bmad-code-review  →  done
+# Ne créer la story suivante qu'une fois la précédente `done` : c'est ce qui
+# permet d'y verser ce qu'on vient d'apprendre.
+
+generated: 09-08-2026 20:45
+last_updated: 17-08-2026
+project: Aqar DZ
+project_key: NOKEY
+tracking_system: file-system
+story_location: "docs/stories"
+
+development_status:
+  # ── Épopée 0 — Ne pas perdre les données ─────────────────────────
+  # PASSE AVANT TOUT, y compris avant l'épopée 1. Un défaut exploité se
+  # corrige ; des données perdues ne reviennent pas. Deux jours de
+  # travail. Issue du bilan de santé, pas du registre de défauts.
+  # OUVERTE le 16-08-2026 : elle passe avant tout depuis le 9 août, et six
+  # épopées lui sont passées devant. Rien ne la bloquait.
+  epic-0: in-progress
+  # Story ÉCRITE le 16-08-2026, pas développée. Deux mesures l'ont ouverte :
+  #   grep -rln "pg_dump" --include=* . | grep -v node_modules | grep -v '^./.git'
+  #     -> 6 fichiers, dont AUCUN n'est exécutable. README.md:151 porte la
+  #        seule commande réelle, à lancer à la main.
+  #   lib/env.ts:155 refuse le démarrage en production en mode Supabase,
+  #     donc les fichiers téléversés sont TOUS dans uploads_data — un seul
+  #     gisement à couvrir.
+  # ⚠ LA DÉPENDANCE ANNONCÉE PAR LA STORY 2.5 EST FAUSSE, et l'ordre réel
+  # est l'inverse : 2.5 ouvre le seau APPLICATIF, 0.1 dépose dans un seau
+  # d'ARCHIVES — l'arbitrage du 10-08 interdit d'ailleurs de les confondre.
+  # Faire 2.5 d'abord ferait naître un second gisement de fichiers, donc un
+  # cas de plus à couvrir. 0.1 est MOINS CHÈRE MAINTENANT. Correction de
+  # docs/epics.md et de la ligne 2-5 ci-dessous portée par la story (T9).
+  # RESTE À L'ÉDITEUR avant le développement (CLAUDE.md §13) : la
+  # juridiction puis le fournisseur — ces archives portent des pièces
+  # d'identité de clients algériens —, les cinq valeurs (les quatre S3_* de
+  # l'arbitrage, PLUS la phrase de passe de chiffrement, que l'arbitrage
+  # n'avait pas nommée), et l'accord §2 pour éprouver sur la pile.
+  # Le CODE, lui, n'attend rien : l'arbitrage exige qu'il ne connaisse que
+  # quatre variables, et un tel code s'écrit sans les connaître.
+  0-1-sauvegarde-automatique-hors-machine: ready-for-dev
+  0-2-prouver-la-restauration: backlog
+  0-3-collecte-des-erreurs: backlog
+  epic-0-retrospective: optional
+
+  # ── Épopée 1 — Fermer ce qu'un tiers peut exploiter ──────────────
+  # Bloque l'ouverture à un premier client réel. 9 défauts.
+  epic-1: in-progress
+  # Arbitrage du 13-08-2026 : FIGMA EST ABANDONNÉ. Les critères qui
+  # prévoyaient de lire la clé depuis une variable d'environnement tombent —
+  # on ne sécurise pas l'accès à un outil qu'on retire. Figma est sorti du
+  # dépôt (mcp-config.example.json supprimé, plus aucune config MCP).
+  # LA STORY RESTE `in-progress` : retirer le fichier NE RÉVOQUE PAS la clé,
+  # et la révocation est un geste chez Figma qui appartient à l'éditeur.
+  # REP-77 ouvert : la clé est vivante à DEUX endroits, pas un — l'historique
+  # de main, ET origin/feature/design-improvements qui la suit encore et qui
+  # est poussée sur GitHub. Purger main seul n'aurait rien fermé.
+  1-1-sortir-la-cle-api-du-depot: in-progress
+  1-2-normaliser-les-adresses-email: done
+  1-3-proteger-l-acces-aux-documents: done
+  1-4-identifier-l-appelant: done
+  1-5-echapper-les-emails: done
+  1-6-neutraliser-les-formules-csv: done
+  1-7-contraindre-l-url-d-un-document: done
+  # PROCHAINE STORY, et elle passe AVANT la 4-6.
+  # Défaut n° 33, trouvé le 12-08-2026 par la quatrième passe : les trois
+  # gardes revérifient l'agence à chaque requête et jamais l'utilisateur.
+  # Désactiver un compte ne lui retire donc aucun accès, pendant jusqu'à
+  # trente jours ; changer son rôle non plus. Elle précède la 4-6 parce
+  # que celle-ci ajoute cinq lecteurs de `userRole` — on assainit la
+  # source avant de la brancher (docs/epics.md, « Ordre imposé », point 3).
+  # Revue adversariale soldée le 12-08-2026 : 20 constats traités, 2
+  # décisions rendues par délégation (cache de routeur, 303 sur non-GET).
+  # Correctif structurel : le contrôle de rôle quitte middleware.ts — il
+  # autorisait sur le rôle du JETON pendant que les gardes lisaient la
+  # BASE, et cette story avait ainsi ouvert une boucle de redirection qui
+  # ENFERMAIT un compte rétrogradé. Une seule couche autorise désormais,
+  # et la mutation le prouve : le contrôle rétabli, le test rougit.
+  # 99/99 verts, tsc et lint propres.
+  1-8-rendre-la-revocation-effective: done
+  # 🔴 REP-37, relevé le 10-08-2026 et resté ONZE JOURS sans propriétaire :
+  # un tiers qui connaît une adresse verrouille le compte, et les adresses
+  # des directeurs sont publiées sur les vitrines. Rejoint la barrière.
+  # REP-37 fermé : le compteur par compte ne garde plus la porte, il garde
+  # la réponse. REP-38, 39, 40 fermés avec. REP-34 hors périmètre, écrit.
+  # 111/111 verts.
+  # Revue adversariale soldée le 13-08-2026 : 13 correctifs, 1 arbitrage.
+  # Deux régressions introduites par le premier jet sont fermées et prouvées
+  # par mutation — fenêtre ré-ancrée sur l'appel (le déni d'accès
+  # s'ALLONGEAIT), et oracle rendant confirmable le mot de passe d'un compte
+  # révoqué. Le délai est progressif ; la borne réelle est le compteur par
+  # adresse, et c'est écrit. 112/112 verts.
+  # Close le 13-08-2026. Trois écarts trouvés AU MOMENT DE CLORE : la File
+  # List déclarait 7 fichiers sur 17, une des trois fautes de `sed` vivait
+  # encore sous une case cochée, et REP-34 allait devenir orphelin — la
+  # story le refusait pendant qu'epics.md le lui assignait. Transféré à la
+  # story 5.10, ouverte pour lui.
+  1-9-ne-plus-laisser-verrouiller-un-compte: done
+  epic-1-retrospective: optional
+
+  # ── Épopée 2 — Durcir le déploiement ─────────────────────────────
+  # Bloque la mise en ligne sur un VPS. Indépendante : peut être menée
+  # en parallèle de l'épopée 1 par une autre personne.
+  epic-2: in-progress
+  2-1-fermer-l-acces-direct: done
+  2-2-verifier-le-contenu-des-fichiers: done
+  2-3-mettre-la-pile-en-https: backlog
+  2-4-fermer-et-durcir-la-base: done
+  # 13 constats des stories 1.3, 1.7 et 2.2, sans propriétaire jusqu'au
+  # 12-08-2026. Bloque tout déploiement sur stockage objet, ~~donc
+  # l'épopée 0~~ — FAUX, mesuré le 16-08-2026 en ouvrant la story 0.1, et
+  # l'ordre réel est l'inverse. 2.5 ouvre le seau APPLICATIF, où les
+  # documents sont SERVIS ; 0.1 dépose dans un seau d'ARCHIVES. Ils ne
+  # partagent ni seau, ni identifiants, ni code — l'arbitrage du 10-08
+  # interdit même de les confondre (« une sauvegarde déposée au même
+  # endroit que les données qu'elle protège n'est pas une sauvegarde »).
+  # Et parce que lib/env.ts:155 refuse aujourd'hui le mode Supabase en
+  # production, les fichiers sont tous dans uploads_data : faire 2.5
+  # d'abord ferait naître un SECOND gisement à sauvegarder. L'épopée 0 est
+  # moins chère avant 2.5 qu'après.
+  2-5-ouvrir-le-seau-prive-et-solder-la-dette-documents: backlog
+  # BUG-37, et la story est née d'une PANNE, pas d'une lecture : le
+  # 16-08-2026, plus aucune connexion n'aboutissait sur le déploiement
+  # documenté. La base portait l'énumération AgencyPlan, l'image servait un
+  # client Prisma qui attend un String, et `authorize()` relit l'agence à
+  # chaque connexion. TOUS les comptes échouaient, pas seulement celui
+  # signalé. Le message affiché — « Une erreur est survenue » — vient du
+  # catch de app/auth/login/page.tsx:52 : il EXCLUT tous les refus légitimes,
+  # qui ont chacun leur phrase. Faux-ami coûteux au diagnostic.
+  # L'IMAGE A ÉTÉ RECONSTRUITE, la panne est fermée. La story ne traite PAS
+  # la panne : elle traite le fait qu'elle ait traversé QUATRE contrôles.
+  #   1. docker-compose.prod.yml:171 garde un seul sens — l'app jamais en
+  #      avance sur la base, rien sur le cas inverse. Et package.json:12
+  #      (`db:deploy`) applique depuis l'HÔTE, sans toucher au conteneur.
+  #   2. app/api/public/health/route.ts:20 fait `SELECT 1` : aucune colonne
+  #      traversée, donc `healthy` pendant que 100 % des connexions
+  #      échouaient. Docker n'avait pas tort au sens de ce qu'il mesure.
+  #   3. grep -nE 'signin|login|credentials|session|Cookie|auth'
+  #        scripts/verify-deploy.mjs   -> AUCUNE occurrence.
+  #      Le script de la story 5.14 serait resté vert ce matin-là.
+  #   4. REP-95, déjà connu : la suite E2E ne passe pas par l'image servie.
+  # EN UNE PHRASE : aucun contrôle du dépôt ne lit une ligne Agency
+  # AUTHENTIFIÉE contre l'image RÉELLEMENT EN SERVICE.
+  # Ce n'est pas un incident mais une classe — `grep -cE '^enum '
+  # prisma/schema.prisma` -> 19. Chaque migration qui touche l'une d'elles,
+  # appliquée sans reconstruire, rejoue ceci à l'identique.
+  # ⚠ DEUX RISQUES ÉCRITS DANS LA STORY (§8), et ils décident de sa forme :
+  # une sonde plus exigeante peut refuser de démarrer une pile SAINE (base
+  # vide au premier déploiement, nginx dépend de frontend healthy) ; et un
+  # verify:deploy qui s'authentifie a besoin d'un compte qu'il n'a le droit
+  # ni de créer sans écrire, ni d'emprunter à la démonstration (§3).
+  # Story ÉCRITE le 16-08-2026, pas développée.
+  # ARBITRAGE T4 RENDU le 16-08-2026 par l'éditeur, et il débloque T5 : LA
+  # SONDE D'ÉCHEC. verify:deploy tente une connexion volontairement INVALIDE
+  # et exige un refus lisible — ni session, ni secret, ni écriture. Motif
+  # mesuré : auth.ts:157-159 lit la ligne Agency (include: { agency: true })
+  # AVANT compare() en 188, donc un mot de passe faux traverse exactement le
+  # code qui a casse. Les trois autres sorties sont écartées : le compte
+  # jetable fait ÉCRIRE le script sur une production (et un script mort en
+  # route laisse un compte derrière lui), le compte de démonstration use un
+  # compteur partagé par toute la suite (§3), le compte dédié est un mot de
+  # passe permanent de plus.
+  # ⚠ VÉRIFIER L'ARBITRAGE L'A CORRIGÉ, DANS LES DEUX SENS — et c'est le
+  # genre de chose qui ne se déduit pas :
+  #   - le compteur PAR COMPTE ne ferme aucun compte. penaliserEchec
+  #     (auth.ts:88) retarde la réponse, plafonné à 30 s, rien d'autre.
+  #     Le risque annoncé était plus large que le code ; il se réduit à un
+  #     réglage de délai d'attente, qui doit dépasser DELAI_PLAFOND_MS.
+  #   - le compteur PAR ADRESSE, lui, refuse AVANT toute lecture et retourne
+  #     null sans jamais atteindre findUnique (auth.ts:152-155). Un critère
+  #     exigeant « un refus lisible » serait donc VERT EN N'AYANT RIEN
+  #     ÉPROUVÉ — §6, le contrôle posé à côté du trou. D'où le message
+  #     unique exigé : « Email ou mot de passe incorrect » et rien d'autre ;
+  #     « Trop de tentatives » est indéterminé, pas un succès.
+  # T1 FAITE le 16-08-2026, accord §2 donné (« vas-y, lance »). ROUGE OBTENU
+  # ET ATTRIBUABLE, side-car aqar-dz:derive-bb96dc9 sur :3003 contre la même
+  # base — la pile en service n'a été ni arrêtée ni modifiée.
+  #   sonde   /api/public/health -> 200 {"status":"ok","database":"up"}
+  #           SUR UN PRODUIT OU AUCUNE CONNEXION N'ABOUTIT. La sonde ment,
+  #           et c'est mesuré, plus déduit d'une lecture. Le healthcheck
+  #           étant un wget --spider sur cette URL, le conteneur se serait
+  #           déclaré `healthy`.
+  #   sain    302 -> /auth/login?error=CredentialsSignin&code=credentials
+  #   dérivé  302 -> /auth/error?error=Configuration
+  #           Ce n'est pas seulement `error=` qui change, C'EST LE CHEMIN.
+  #           La sonde d'AC-2 tient donc en une assertion sur la
+  #           redirection : ni session, ni secret, ni $ACTION_ID.
+  #   journal Error converting field "plan" ... value of "pro" — on
+  #           reproduit bien BUG-37, pas autre chose.
+  #   verify:deploy sortie 0 sur la pile saine : il n'a aucun moyen de
+  #           savoir contre quelle image il parle. C'est le trou, pas un
+  #           échec du script.
+  # PAS PROUVÉ, et écrit pour ne pas le croire fait : verify:deploy n'a pas
+  # été lancé CONTRE le side-car. L'AC-3 reste entier, sa mutation après T6.
+  # DEVELOPPEE le 16-08-2026, accord §2 donné. 8 tâches sur 10 faites.
+  #   npm run test:e2e -> 142 passed (1,7 min), tsc 0, lint 0
+  #   npm run verify:deploy sur la pile saine -> sortie 0
+  # QUATRE MUTATIONS jouées SÉPARÉMENT, chacune avec son retour au vert —
+  # l'erreur de la 6.3 (mutations groupées, rouge inattribuable) n'est pas
+  # refaite :
+  #   client privé de `pro`      -> 503 { schema: "incompatible" }
+  #   migration retirée du dépôt -> 503 { schema: "image-en-retard",
+  #                                       migrations: [..._agency_plan_enum] }
+  #   COPY retirée du Dockerfile -> 1 failed sur la ligne visée, ET le test
+  #                                 voisin resté vert (1 failed, 1 passed)
+  #   épreuve d'échec vs image dérivée -> /auth/error?error=Configuration,
+  #                                 message désignant BUG-37
+  # ⚠ LA PREMIÈRE MUTATION A DÉMENTI L'ÉNONCÉ ET FAIT CORRIGER LE CODE.
+  # La sonde lisait UNE ligne (`findFirst`) : client privé de `pro`, base en
+  # contenant, elle est restée 200 — la ligne rendue portait `starter`, que
+  # le client mutant connaissait encore. Une lecture d'une ligne n'éprouve
+  # que la valeur de cette ligne. Corrigé en `groupBy`, qui rend une ligne
+  # par VALEUR DISTINCTE présente en base. Sans cette mutation, l'AC-1 aurait
+  # été coché sur une sonde aveugle dans le cas le PLUS probable — une base
+  # où la plupart des agences sont en `starter`. C'est §7 qui fonctionne.
+  # REP-96 DÉPLACÉ ici depuis la 5.11 et relevé de 🔵 à 🟠 : il décrivait
+  # BUG-37 onze jours à l'avance, et la 5.11 ne touche pas au code applicatif.
+  # Traité par migrations plutôt que par SHA de commit ; le SHA n'est PAS
+  # fait, donc REP-96 n'est pas soldé en entier.
+  # CLOSE le 17-08-2026, correctif EN SERVICE et mesuré :
+  #   curl :8095/api/public/health -> {"…","schema":"a-jour"} · frontend healthy
+  #   npm run verify:deploy        -> sortie 0, refus lisible sur le chemin authentifié
+  #   scripts/eprouver-base-vierge.sh -> 20 tables, 0 ligne, HTTP 200 (T3, AC-1)
+  # BUG-37 passe à « corrigé et en service » au registre. REP-96 est RÉTRÉCI
+  # et non soldé — la sonde voit l'écart de migrations, pas l'écart de commit
+  # — donc rattaché à la story 2.8, ouverte pour l'occasion.
+  2-6-refuser-de-servir-sur-un-schema-inconnu: done
+  # REP-103, relevé le 17-08-2026 : `docker compose down -v` efface la base.
+  # Story ÉCRITE le 17-08-2026, pas développée. Trois mesures la fondent,
+  # toutes prises sur un projet Compose JETABLE, jamais sur `aqar-prod` :
+  #   `down -v` supprime un volume ordinaire et ÉPARGNE un `external`, sans
+  #     le moindre avertissement dans les deux cas ;
+  #   un `external` dont le `name:` ne désigne rien -> `external volume "…"
+  #     not found`, sortie 1, AUCUN conteneur créé ;
+  #   `docker volume ls -q | grep aqar` -> les deux `aqar-prod_*` seulement,
+  #     donc les volumes de DÉVELOPPEMENT n'existent pas : les rendre
+  #     `external` casserait tout poste neuf (AC-3).
+  # DÉVELOPPÉE le 17-08-2026 : T1, T3, T4, T5, T6, T7, T9 faits et prouvés.
+  # Les deux volumes sont `external: true` + `name:` complet ; l'invariant de
+  # tests/deploiement.spec.ts les garde, prouvé par DEUX mutations jouées
+  # séparément, messages lus. 143 passed (142 avant, plus le cas ajouté).
+  # Développement laissé en volumes ORDINAIRES, motif écrit dans le fichier :
+  # `docker volume ls -q | grep '^aqar_'` ne rend rien, donc `external` y
+  # casserait tout poste neuf ; et une base de dev se jette.
+  # EN SERVICE le 17-08-2026 : T8 faite par l'éditeur. Le `up -d --build` a
+  # abouti, ce qui est la moitié de la preuve — un `name:` faux serait sorti
+  # en 1 sans créer un conteneur. `docker compose config` rend external=True
+  # avec les deux noms exacts. REP-103 RÉSOLU.
+  # T2 NON FAITE et plus faisable : l'empreinte d'avant a été manquée. Non
+  # cochée. Remplacée par plus fort — `docker volume inspect` rend
+  # CreatedAt=2026-08-09 pour les deux volumes, donc ils n'ont pas été
+  # recréés. La donnée n'a pas été comparée : elle n'a pas été touchée.
+  2-7-volume-de-la-base-hors-de-portee: done
+  # REP-96 rétréci par la 2.6 : reste l'écart de COMMIT, invisible quand
+  # aucune migration n'a bougé — 67 commits de retard en ont fait la preuve.
+  # Story ÉCRITE ET DÉVELOPPÉE le 17-08-2026. Trois mesures Docker la
+  # fondent, jouées sur une image jetable AVANT d'écrire une ligne : `-e`
+  # (donc `env_file`) écrase une `ENV` gravée dans l'image, mais ne peut
+  # rien contre un FICHIER — d'où la conception. Séquence : la 2.7 est
+  # encore `in-progress`, §1 levé explicitement par l'éditeur le 17-08-2026.
+  #
+  # Éprouvé : les trois états relevés sur la sonde SERVIE dans un même
+  # processus (inconnu / SHA / marqueur invalide → inconnu), ce qui prouve
+  # au passage l'absence de cache. Cinq mutations jouées séparément, toutes
+  # rouges, messages lus. 147 cas verts (143 avant, plus les 4 ajoutés).
+  #
+  # EN SERVICE le 17-08-2026 : T13 faite par l'éditeur. La trace de
+  # construction porte `RUN printf '%s' "493f2194…" > ./.commit`, la sonde
+  # rend ce SHA, et verify:deploy conclut « identique à HEAD ». REP-96
+  # RÉSOLU — deux jours après avoir été relevé.
+  2-8-dire-quel-commit-est-en-service: done
+  epic-2-retrospective: optional
+
+  # ── Épopée 4 — Reprendre la suite de tests ───────────────────────
+  # Numérotée 4 dans docs/epics.md mais À MENER AVANT L'ÉPOPÉE 3 :
+  # sans filet de régression, les correctifs suivants sont posés à
+  # l'aveugle.
+  epic-4: in-progress
+  4-1-supprimer-les-tests-trompeurs: done
+  4-2-couvrir-le-cloisonnement: done
+  4-3-couvrir-la-separation-des-roles: done
+  4-4-verrouiller-les-correctifs-epopee-1: done
+  # Extraction incrémentale d'une couche métier : à faire PENDANT cette
+  # épopée, ni avant (pas de filet) ni après (tests à réécrire).
+  4-5-extraire-une-couche-metier: backlog
+  # Passe AVANT la 4-5, APRÈS la 1-8, et partage la barrière de
+  # l'épopée 1 (aucun client réel avant qu'elle soit close).
+  # Défaut n° 32, trouvé le 12-08-2026 hors des deux audits du 9 août :
+  # cinq suppressions sans contrôle de rôle dans les écrans d'édition,
+  # dont celle d'un bien, définitive et en cascade, sans corbeille ni
+  # journal. Les deux arbitrages ont été rendus (voir points d'attention).
+  # Défaut REPRODUIT sur l'instance avant correction : un agent a détruit
+  # un bien ET sa visite en rejouant la Server Action. Quatre gardes posés,
+  # cinq journaux, le bien remis en corbeille, quatre boutons conditionnés.
+  # 5 mutations sur 5 rougissent. Revue adversariale du 12-08-2026 :
+  # 23 constats, dont un dans la PREUVE et non dans le code — l'assertion
+  # du bien ne distinguait pas un refus d'une mise à la corbeille réussie.
+  # La suppression d'une interaction est désormais restreinte à son auteur :
+  # le code appliquait une portée plus large que sa propre justification.
+  # 103/103 verts, tsc et lint propres.
+  4-6-fermer-la-suppression-directe: done
+  # 16 constats sur le harnais — le plus gros gisement d'orphelins du dépôt.
+  4-7-refondre-le-harnais-de-test: backlog
+  # REP-104, mesuré le 17-08-2026 à la demande de l'éditeur — « on est en
+  # développement, ce que je veux c'est tester que tout fonctionne ».
+  # Les 9 actions de création neutralisées ENSEMBLE (tsc 0, lint 0 avant de
+  # lancer, pour que le rouge ne vienne pas du build) : seuls properties,
+  # documents et owners font rougir la suite. clients, sales, rentals,
+  # rental-management, payments et visits passent INAPERÇUS — six modules
+  # sur neuf peuvent être morts sans qu'un des 147 cas ne bronche.
+  # Cause structurelle : tests/agence.ts monte ses décors par db.*.create,
+  # sans traverser une seule Server Action.
+  # DÉVELOPPÉE le 17-08-2026, dans la foulée. Six allers-retours à travers
+  # le produit, six mutations jouées SÉPARÉMENT — chacune ne tue qu'un seul
+  # cas et son message nomme son module. 153 passed, deux fois de suite.
+  # LA RÉPONSE À LA QUESTION POSÉE : les six modules fonctionnent, aucun
+  # BUG-nn à ouvrir. REP-104 RÉSOLU.
+  # Révélé au passage : sous mutation le produit redirige avec `?success=`
+  # en n'ayant rien écrit — un test qui cliquerait serait vert sur un
+  # module mort.
+  4-8-prouver-que-les-modules-metier-fonctionnent: done
+  epic-4-retrospective: optional
+
+  # ── Épopée 3 — Fiabiliser les données et la tenue à la charge ────
+  epic-3: in-progress
+  # BUG-05 et BUG-11. Trois bornes MESURÉES contre la base avant d'écrire une
+  # ligne : numeric(5,2) refuse 1000, numeric(15,2) refuse 10^13, int4 refuse
+  # 2147483648 — code 22003 les trois fois.
+  # LE PIÈGE, invisible depuis le nom du champ : « commission » désigne TROIS
+  # choses. Property.commission est un TAUX en Decimal(5,2) ; celles de Sale
+  # et RentalManagement sont des MONTANTS en Decimal(15,2). Un .max(100) posé
+  # sur le nom aurait cassé deux modules (§8). Un test le garde, et la
+  # mutation le prouve : le taux appliqué à saleSchema, ce test rougit SEUL.
+  # Étendu délibérément à toutes les colonnes Decimal(15,2) : borner la seule
+  # commission aurait laissé salePrice produire le même overflow.
+  # §8 vérifié AVANT de coder : aucune fiche existante ne dépasse les bornes
+  # (max observés — 7 pièces, 6 étages, 10 % de commission).
+  # Cinq mutations séparées, cinq rouges. 158 passed.
+  3-1-borner-les-saisies-numeriques: done
+  # BUG-06 et BUG-38. LE CORRECTIF DE BUG-06 ÉTAIT DÉJÀ LÀ — posé en effet de
+  # bord du commit 92f826b (épopée 6), sans story, sans trace au registre et
+  # SANS AUCUN TEST. La story lui a apporté la preuve et la trace.
+  # Le balayage exigé par son AC-3 a ensuite trouvé SIX AUTRES SITES du même
+  # défaut : des gardes en `valeur in TABLE_LABELS`, trouées par la chaîne de
+  # prototypes. Mesuré : `constructor`, `toString`, `valueOf`, `__proto__`,
+  # `hasOwnProperty`, `isPrototypeOf` franchissent la garde ; `supprime` non.
+  # Deux d'entre eux sont sur la VITRINE PUBLIQUE : `?type=constructor`
+  # remplaçait l'écran par une page d'erreur, sans compte.
+  # Aucune donnée n'était en danger (la colonne est une énumération
+  # PostgreSQL) : ce qui manquait est le REFUS LISIBLE. Même mesure que celle
+  # déjà écrite dans le commentaire de agencyPlanSchema le 16-08-2026.
+  # La leçon existait dans lib/offres.ts depuis l'épopée 6 — appliquée à un
+  # seul fichier, elle ne protégeait qu'un seul fichier.
+  # Écriture → schéma Zod ; lecture → valeur inconnue IGNORÉE, pas refusée.
+  # Quatre mutations séparées, quatre rouges. 162 passed.
+  3-2-valider-le-dernier-cast-d-enum: done
+  # BUG-07. MESURÉ AVANT DE CODER, sur une agence de 500 biens montée pour
+  # l'occasion puis effacée : 624 944 -> 34 112 octets, 23 -> 4 ms. Soit
+  # ~1,18 Ko par bien, payé à chaque affichage de la console.
+  # Le scénario de l'audit (50 agences × 2 000 biens) n'a PAS été monté :
+  # extrapolé il vaut ~118 Mo, et c'est écrit comme un calcul, pas une mesure.
+  # §8 POSÉ AVANT D'ÉCRIRE : le nombre affiché change-t-il ? Le filtre de
+  # corbeille de lib/prisma.ts ne couvre que le PREMIER NIVEAU — donc ni
+  # l'include ni le _count. Vérifié : 0 agence dont le nombre changerait.
+  # Qu'un bien en corbeille reste compté est BUG-24, porté par la story 3.5.
+  # Le décor porte 2 comptes et 3 biens : des nombres ÉGAUX auraient laissé
+  # une colonne branchée sur l'autre passer inaperçue.
+  # Trois mutations, trois rouges — dont l'include rajouté À CÔTÉ du _count,
+  # que seul le test d'invariant voit. 164 passed.
+  3-3-compter-sans-tout-charger: done
+  # BUG-08. MESURÉ SUR L'APPLICATION SERVIE — ce coût-ci traverse le réseau,
+  # contrairement à celui de la 3.3. Décor de 300 biens publiés :
+  # 2 302 954 -> 222 231 octets, 399 -> 210 ms, soit ~7,7 Ko par bien.
+  # ET `?page=2` RENDAIT LA PAGE 1 À L'OCTET PRÈS : il n'y avait pas une
+  # pagination à réparer, il n'y en avait aucune.
+  # §8 — LE PIÈGE N'ÉTAIT PAS LA LENTEUR, C'ÉTAIT UN NOMBRE. Le bandeau
+  # affiche « N biens disponibles » en très gros : l'argument commercial de
+  # l'agence. Branché sur la liste paginée il annonçait 25 à TOUTES les
+  # agences. Il passe par un count() portant le MÊME where, donc il suit les
+  # filtres comme avant. La mutation qui l'y rebranche rougit deux cas.
+  # Deux cas sont NÉS de la pagination et sont traités : ?page=99 dit « cette
+  # page n'existe pas » au lieu de mentir, et chaque page porte son numéro
+  # dans son titre (sinon : contenu dupliqué annoncé à l'identique).
+  # Le plan du site n'est pas touché — l'AC-2 l'exige — mais il ne tient pas
+  # le scénario de cette même AC : 50 × 2 000 = 100 001 URL pour une limite
+  # de 50 000. REP-105, story 3.12 ouverte pour l'occasion.
+  # Cinq mutations séparées, cinq rouges. 168 passed.
+  3-4-paginer-la-vitrine-publique: done
+  # BUG-24 corrigé, REP-99 soldé. Le balayage a trouvé SIX endroits et non
+  # cinq, et le sixième dément le défaut : la fiche du propriétaire
+  # n'affichait pas 3 biens là où la liste en annonçait 4 — elle en
+  # affichait 4. Les deux écrans se trompaient du même côté, ce qui ne se
+  # voit pas. Mesuré avant correction, pas déduit.
+  # La règle §2 n'est plus une phrase : ESLint refuse delete/deleteMany et
+  # findUnique sur les trois modèles, quel que soit le client. `npm run
+  # lint` a dû être élargi à prisma/, scripts/ et tests/ — next lint les
+  # ignorait, et l'accident de REP-99 a eu lieu dans un script.
+  # `npm run audit:cascades` recense 11 suppressions en cascade.
+  # Six mutations séparées, six rouges — dont une qui prouve l'INVERSE :
+  # filtrer la relation au singulier casserait la story 3.9.
+  3-5-etendre-la-suppression-reversible: done
+  # BUG-25 et BUG-29 corrigés. Les deux touchent la vitrine, et aucun ne se
+  # prouve comme l'autre. BUG-29 se mesure de bout en bout. BUG-25, LA SUITE
+  # NE PEUT PAS LE VOIR : elle construit et sert avec le même environnement
+  # (REP-95). Reproduit à la main — construit avec une adresse, servi avec
+  # une autre : robots.txt annonçait construction.invalid pendant que son
+  # voisin sitemap.xml disait execution.invalid.
+  # L'étape ajoutée à verify:deploy compare les DEUX FICHIERS ENTRE EUX : sa
+  # première version comparait à l'adresse de sonde et échouait sur une
+  # configuration saine. Le différentiel l'a montré avant qu'elle ne serve.
+  # metadataBase est le même piège — mesuré, rien n'est gelé aujourd'hui,
+  # documenté sur place, aucun REP ouvert pour une hypothèse non observée.
+  # Quatre mutations séparées, quatre rouges. 176 passed.
+  3-6-corriger-robots-et-filtre-wilaya: done
+  # Seul levier de fluidité restant : 2,5 Mo d'images contre 210 Ko de
+  # code. Objectif mesurable — LCP sous 2,5 s en mobile bridé.
+  # ⚠ L'AC-5 N'EST PAS TENUE SUR L'ACCUEIL, et le motif est mesuré : son
+  # LCP n'est PAS une image, c'est un paragraphe livré avec opacity:0
+  # (34 occurrences dans le HTML servi, 0 sur la vitrine). Aucun travail
+  # sur les images ne pouvait le déplacer. REP-107, story 3.14.
+  # `sharp` A DÛ ÊTRE AJOUTÉE — arbitrage §2 rendu par délégation. Sans
+  # elle, next/image répond 500 en sortie autonome : lu ligne 665 de
+  # image-optimizer.js, pas supposé. Recopiée dans l'image Docker comme le
+  # client Prisma, pour la même raison — un `require` dynamique que
+  # l'analyse statique de .next/standalone ne voit pas toujours.
+  # L'INVENTAIRE DE LA FICHE ÉTAIT FAUX : 13 balises et non 11. `grep
+  # "<img"` en rate deux, et ce sont LES DEUX PLUS LOURDES — les fonds
+  # animés, écrits `motion.img`. 12 converties ; la 13e est une URL data:
+  # que le serveur n'a jamais vue, motif écrit sur place.
+  # Poids transféré, émulation Pixel 5 : vitrine 1 460 -> 198 Ko (÷7,4),
+  # authentification 637 -> 64 Ko (÷10), accueil 532 Ko -> ZÉRO au premier
+  # écran (÷4,8 page entièrement défilée). Lighthouse : vitrine 96, LCP
+  # 2,8 s, CLS 0 ; accueil 91, LCP 3,5 s.
+  # DEUX MUTATIONS SUR TROIS SONT PASSÉES AU VERT, et ce sont les deux qui
+  # ont servi : l'une a révélé qu'une image en `fill` dont le parent perd
+  # son `relative` charge quand même et recouvre l'écran — assertion
+  # ajoutée ; l'autre que le garde que je venais d'écrire ne tenait rien —
+  # code retiré.
+  # NON FAIT, et écrit comme tel : l'image Docker n'a pas été construite,
+  # donc le COPY de sharp n'est pas éprouvé. Il l'est au premier
+  # déploiement — une image manquante répondrait 500.
+  3-7-servir-les-images-a-leur-poids-reel: done
+  3-8-indexer-ce-que-les-listes-trient: backlog
+  # Défaut n° 34, relevé le 12-08-2026 par la revue de code de la story 4.6
+  # et REPRODUIT sur l'instance : un bien mis à la corbeille disparaît de la
+  # liste déroulante de ses visites, le navigateur retombe sur la première
+  # option, et enregistrer sans rien changer rattache la visite à un autre
+  # bien. Cinq écrans concernés. PASSE AVANT LE RESTE DE L'ÉPOPÉE 3 ET
+  # AVANT LA 4-5 : elle ferme une corruption, l'autre améliore la
+  # testabilité. Demande un arbitrage produit avant tout code.
+  # Corrigé le 12-08-2026 : le parent en corbeille reste proposé, étiqueté.
+  # Dix couples écran → champ, un helper unique (lib/corbeille.ts), et la
+  # mutation a démenti l'hypothèse que le Select de Radix protégeait
+  # `sales` et `rentals` — son select caché retombe comme un natif.
+  # Revue adversariale : le correctif rendait les cinq écrans IMPOSSIBLES à
+  # enregistrer — les Server Actions revérifient le lien contre le filtre de
+  # corbeille — et le test ne pouvait pas le voir, un refus laissant le lien
+  # inchangé comme un succès. Réparé par `lienInchange()`. 106/106 verts.
+  3-9-rattraper-l-enfant-dont-le-parent-part-a-la-corbeille: done
+  # Les six constats laissés par la revue de la story 3.9 — les six soldés.
+  # REP-03, 06 et 07 N'ÉTAIENT PAS TROIS DÉFAUTS mais trois symptômes d'un
+  # même choix : avoir bâti la liste en DEUX requêtes puis recollé le
+  # résultat en mémoire. Une requête unique les ferme ensemble, et en
+  # SUPPRIME une par parent — trois sur l'écran des paiements.
+  # LE PIÈGE, mesuré dans lib/prisma.ts AVANT d'écrire la ligne : la forme
+  # naturelle `OR: [{ deletedAt: null }, { id: courant }]` ne marche pas.
+  # L'extension teste `"deletedAt" in where` au PREMIER NIVEAU seulement ;
+  # la clef du OR est imbriquée, donc `deletedAt: null` est ajouté À CÔTÉ,
+  # les deux sont ET-és, et le parent en corbeille ne revient pas. Le
+  # correctif aurait compilé et été faux à l'exécution. La mutation M6 le
+  # prouve : retirer la clef `deletedAt: undefined` fait rougir BUG-34.
+  # REP-04 ferme la FAMILLE et non la cause : `optionsParent()` fabrique
+  # l'option manquante quelle que soit la raison, et l'enregistrement est
+  # refusé au lieu de réécrire. §8 assumé — un lien pointant hors agence
+  # rend l'écran non enregistrable tant qu'on ne corrige pas ce champ.
+  # REP-05 : `deletedAt` requis dans le type ; l'oubli passe de « personne
+  # ne le voit » à `error TS2345`.
+  # REP-14 : arbitrage rendu par délégation — REFUSER. Une échéance réglée
+  # est la trace d'un versement, rien d'autre ne la porte. La confirmation
+  # comme troisième issue appartient à la story 3.13, pas à celle-ci.
+  # LA PREMIÈRE VERSION DE LA MUTATION M2 NE COMPILAIT PAS (§6, piège 3) :
+  # elle laissait deux symboles inutilisés, le build échouait, et le rouge
+  # ne venait pas du test. Réécrite pour compiler, puis rejouée.
+  # Six mutations séparées, six rouges. 180 passed (176 avant).
+  3-10-durcir-la-reprise-d-un-parent-en-corbeille: done
+  # La requête de détection existe et est éprouvée ; reste à la passer sur
+  # la production et à décider du sort des lignes remontées.
+  # REP-02 SOLDÉ, et il en cachait DEUX sur la même ligne.
+  #   `data: { ...data, ownerId: data.ownerId ?? property.ownerId }`
+  # À GAUCHE du ?? : REP-02 — aucun formulaire ne rend ce champ, donc le
+  # propriétaire était RECALCULÉ depuis le bien à chaque enregistrement.
+  # Famille de BUG-34, sur un lien calculé côté serveur — ce qu'un
+  # inventaire bâti par `grep name="..."` ne pouvait pas voir.
+  # À DROITE : BUG-39 — les deux schémas ACCEPTAIENT `ownerId` et personne
+  # ne le vérifiait contre l'agence. Un POST forgé rattachait la vente au
+  # propriétaire d'une AUTRE agence, dont le nom ressort dans le contrat
+  # PDF, la gestion locative et l'export CSV. REPRODUIT : l'action a
+  # répondu « Vente mise a jour ». Le mécanisme de vérification existait
+  # déjà — verifyPaymentLinks — et n'avait jamais été appliqué ici.
+  # BUG-40, trouvé par un TEST ROUGE et non par une lecture : la suite a
+  # échoué sur un cas d'abonnement sans rapport, à 00 h 35 locale / 23 h 35
+  # UTC. `toDateInputValue` convertissait en UTC des dates écrites à minuit
+  # LOCAL — le formulaire affichait la veille, et enregistrer l'écrivait.
+  # En UTC pur le défaut est invisible : il ne se voit pas depuis un
+  # serveur en UTC, et tous les jours depuis Alger.
+  # M3 existe parce que M1 ne suffisait pas : deux écrans réparés, un seul
+  # éprouvé. M5 a fait AJOUTER une assertion — sans elle la mutation du
+  # côté écriture restait verte en UTC+1.
+  # Cinq mutations séparées, cinq rouges. 201 passed (197 avant).
+  # ⛔ RESTE `in-progress` : T9 — passer detection-bug-34.sql sur la
+  # PRODUCTION et décider du sort des lignes remontées — est à l'ÉDITEUR.
+  # §2 : « Toucher à une base de production : jamais, sous aucun prétexte. »
+  3-11-reparer-les-liens-deja-reecrits: in-progress
+  # REP-105, ouverte le 17-08-2026 PAR la story 3.4 : son AC-2 nomme un
+  # scénario — 50 agences de 2 000 biens — que app/sitemap.ts ne tient pas.
+  # 100 001 URL dans un fichier de plan qui en accepte 50 000 : au-delà, les
+  # moteurs l'ignorent, et la vitrine redevient invisible au moment précis
+  # où elle compte le plus. La correction n'est PAS une borne — l'AC-2 exige
+  # que le plan liste tout — mais un INDEX de plans partiels.
+  # ⚠ Constat NON MESURÉ : établi par lecture et par le calcul du scénario.
+  # Aucune base de ce dépôt n'approche ces volumes.
+  # LA STORY A COMMENCÉ PAR CETTE MESURE, puisque c'est ce qui manquait :
+  # 43 vitrines publiées, 4 biens publiés — 48 URL, 49 952 de marge. Le
+  # défaut est ENTIÈREMENT PROSPECTIF, et c'est désormais un chiffre.
+  # Limite vérifiée à sa source (sitemaps.org). SECONDE MESURE, celle qui
+  # décide de la forme du correctif : ~190 octets par entrée, donc une
+  # tranche de 45 000 pèse 8 à 9 Mo — six fois sous le plafond de 50 Mo.
+  # C'est le NOMBRE d'URL qui borne, pas le poids.
+  # `app/sitemap.ts` a dû être RETIRÉ : la convention de métadonnées de Next
+  # ne sait produire qu'un `<urlset>`, et `generateSitemaps()` laisse
+  # `/sitemap.xml` en 404 — lu dans le code du chargeur, pas supposé.
+  # §8 : deux consommateurs dépendaient de la forme de /sitemap.xml. Le test
+  # suit maintenant la chaîne (meilleur test) ; l'invariant de verify:deploy
+  # compare deux ORIGINES et tient sans changer une ligne — rejoué, sortie 0.
+  # TROIS DES SEPT ROUGES ÉTAIENT MUETS — `toEqual` anonyme. Les messages
+  # ont été écrits PUIS la mutation rejouée : un rouge qui ne nomme pas la
+  # propriété visée ne vaut pas grand-chose six mois plus tard (§6).
+  # Sept mutations séparées, sept rouges. 187 passed (180 avant).
+  3-12-borner-le-plan-du-site: done
+  # REP-106, ouverte le 17-08-2026 par la mesure de la story 3.5 :
+  # `npm run audit:cascades` dit que « Détruire » emporte 11 tables, et ce
+  # bouton ne demandait aucune confirmation — le produit n'en avait nulle
+  # part.
+  # ARBITRAGE RENDU PAR DÉLÉGATION, et il porte sur le PÉRIMÈTRE : pas de
+  # champ de confirmation côté serveur. Il n'arrêterait ni l'accident — que
+  # le dialogue traite — ni un administrateur décidé, que
+  # `requireAgencyAdmin()` a déjà autorisé. Ce serait un garde-fou en
+  # trompe-l'œil, exactement le reproche fait à l'avertissement d'origine.
+  # Un test REJOUE `purge` sans l'écran et constate qu'elle aboutit : il
+  # documente au lieu de laisser croire à une garde (§6, piège 4).
+  # CE QUI FAIT LA DIFFÉRENCE : le dialogue CHIFFRE. « 1 visite, 1 vente,
+  # 1 location et 1 quittance de loyer », lu en base. Détruit et détaché
+  # sont dits séparément, et les tables sont PAR NATURE — une vente
+  # rattachée à un client est détruite avec lui, la même rattachée à un
+  # propriétaire survit en perdant son bailleur. Une table commune aurait
+  # menti à l'une des deux.
+  # AUCUNE DÉPENDANCE AJOUTÉE : AlertDialog n'est pas installé, Dialog si.
+  # §8 : le déclencheur devenant un `button`, la corbeille serait devenue
+  # impossible à vider SANS JAVASCRIPT. Un <noscript> rend ce chemin.
+  # DEUX ROUGES ONT D'ABORD ÉTÉ MUETS, dont un à 4 min 24 de délai dépassé.
+  # Assertions ajoutées, mutations REJOUÉES : elles tombent en une seconde
+  # et nomment la propriété perdue (§6).
+  # Les six autres actions destructives ne sont PAS modifiées ; l'ordre de
+  # reprise, et les deux qui ne doivent PAS l'adopter, sont écrits dans
+  # docs/architecture.md §4.
+  # Six mutations séparées, six rouges. 192 passed (187 avant).
+  3-13-faire-confirmer-ce-qui-detruit: done
+  # REP-107, ouverte le 17-08-2026 PAR la story 3.7, qui a dû abandonner
+  # une hypothèse pour la trouver : le LCP de l'accueil est un PARAGRAPHE
+  # livré transparent, pas une image. LCP 3,459 s pour un TTI de 3,459 s —
+  # la page ne s'affiche pas tant qu'elle n'est pas interactive.
+  # ⚠ Demande un arbitrage produit AVANT tout code : l'entrée en fondu
+  # échelonnée EST le parti pris visuel de cette page.
+  # ARBITRAGE RENDU PAR DÉLÉGATION, en une règle : on n'anime pas l'entrée
+  # de ce qui est DÉJÀ à l'écran ; on anime l'entrée de ce qui y ARRIVE. La
+  # chorégraphie ne change pas — mêmes délais, mêmes durées, même courbe —
+  # seul le moteur change, et avec lui le moment où elle peut commencer.
+  # RÈGLE 8 EST TENUE et c'est dit explicitement : Framer reste la
+  # bibliothèque d'animation du produit ; une seule séquence change de
+  # moteur, parce qu'aucune animation pilotée par un script ne peut
+  # commencer avant l'hydratation — contrainte du navigateur, pas un goût.
+  # opacity:0 servis sur / : 34 -> 21. LCP en mesure directe : 3 500 ->
+  # 1 556 ms. ⚠ Lighthouse, qui SIMULE, dit 3,17 s et reste collé à son
+  # TTI : les deux méthodes ne s'accordent pas, et l'écart est ÉCRIT plutôt
+  # que tranché — je ne choisis pas la mesure la plus flatteuse.
+  # DEUX DÉFAUTS TROUVÉS EN CHEMIN. `CountUp` rendait 0 côté serveur : sans
+  # JavaScript la page annonçait « 0 modules métier », pas une page vide
+  # mais une page FAUSSE, y compris pour les robots. Et le bloc
+  # prefers-reduced-motion coupait la durée mais pas le DÉLAI — ce qui ne
+  # supprime pas le mouvement, mais le remplace par une attente.
+  # Le premier jet du test rougissait sur un produit correct : il lisait
+  # l'opacité avant que l'animation CSS n'ait commencé. Ce qu'on garde
+  # n'est pas « visible à la milliseconde zéro » mais « visible sans
+  # qu'un script s'exécute ».
+  # Deux mutations séparées, deux rouges. 197 passed (195 avant).
+  3-14-rendre-l-accueil-visible-avant-son-javascript: done
+  epic-3-retrospective: optional
+
+  # ── Épopée 5 — Dette technique et lisibilité produit ─────────────
+  # 5-1 exige un arbitrage produit AVANT tout code.
+  epic-5: backlog
+  5-1-arbitrer-le-depannage-super-admin: backlog
+  5-2-collisions-d-unicite-inscription: backlog
+  5-3-verifier-la-taille-avant-envoi: backlog
+  5-4-fiabiliser-key-from-url: backlog
+  5-5-references-lisibles: backlog
+  5-6-partager-le-budget-de-tentatives: backlog
+  5-7-nettoyer-depot-et-nginx: backlog
+  # Complément de la 1-8, séparé d'elle : celle-ci touche au schéma (une
+  # colonne, une migration) pour fermer le seul cas que la 1-8 laisse
+  # ouvert — un jeton volé sur un compte qui reste actif. Sans urgence :
+  # après la 1-8, le remède existe (désactiver puis réactiver).
+  5-8-revoquer-les-sessions-au-changement-de-mot-de-passe: backlog
+  # `returnTo` non validé sur la seule action ouverte à tous les agents,
+  # plus trois dettes de la même famille.
+  5-9-contraindre-les-redirections-et-les-sorties-libres: backlog
+  # REP-34, transféré depuis la story 1.9 le 13-08-2026 : celle-ci le
+  # déclarait hors périmètre alors qu'epics.md le lui assignait. Compter par
+  # adresse ne borne pas qui en possède plusieurs (botnet, CGNAT, proxys
+  # résidentiels). Demande un ARBITRAGE PRODUIT avant tout code — une
+  # épreuve type captcha a un coût d'usage, et probablement une dépendance,
+  # que CLAUDE.md §2 interdit d'ajouter sans accord.
+  5-10-borner-l-abus-depuis-des-adresses-multiples: backlog
+  # REP-72 (resté ouvert malgré la clôture de la 4.6), REP-74, REP-76.
+  # PEU COÛTEUSE, ET À PASSER TÔT : tant que les décomptes sont faux,
+  # aucune affirmation d'exhaustivité du dépôt n'est croyable, y compris
+  # les vraies. Ne touche pas au code applicatif.
+  5-11-recompter-ce-que-la-documentation-affirme: backlog
+  # BUG-35, et la story est née d'un SIGNALEMENT DE L'ÉDITEUR le 14-08-2026,
+  # pas d'une lecture : cinq commandes sans action dans la barre de la
+  # console éditeur, dont les DEUX boutons « Déconnexion ». Un éditeur ne
+  # pouvait pas fermer sa session ; elle dure douze heures depuis la 1.8.
+  # Ce qui compte est le trou de méthode : cinq passes d'audit sont passées
+  # à côté, et aucun contrôle automatique du dépôt ne voit un bouton sans
+  # gestionnaire — ni `tsc`, ni `lint`, ni la suite.
+  # ⚠ L'ORDRE A ÉTÉ ENFREINT : le code, le test et le registre des défauts
+  # ont été écrits AVANT que cette story n'existe (§1). Constaté et réparé
+  # le 14-08-2026 — la story est écrite après coup, et le dit.
+  # Mesuré le 14-08-2026, sur accord explicite de l'éditeur pour démarrer le
+  # projet : tsc et lint à 0 erreur, `npm run test:e2e` 116/116 verts, et la
+  # PREUVE PAR MUTATION FAITE avec ses messages lus — déconnexion privée de
+  # son gestionnaire → `waitForURL` expire ; « Profil » réintroduit →
+  # Expected 0 / Received 1 ; le contrôle positif reste vert dans les deux
+  # cas. Mutations chirurgicales pour ne pas casser le lint (§6, piège 3).
+  # REP-80 trouvé en chemin, versé à la story 4.7 : `test:e2e` ne joue que
+  # chromium alors que la configuration déclare cinq projets.
+  # REVUE DE CODE DU 14-08-2026, trois couches adversariales : 23 constats
+  # retenus (3 decisions + 15 correctifs + 5 reports), recomptes.
+  # Elle a trouve DEUX AFFIRMATIONS FAUSSES repetees dans trois documents
+  # (« AgencyNavbar correct depuis l'origine » — les deux barres sont nees
+  # inertes, git le prouve ; « /admin/settings que rien ne reliait » — navLinks
+  # la reliait deja) et TROIS CRITERES TENUS A MOITIE : le bouton mobile
+  # n'etait couvert par rien, la cloche non plus, et le cas d'absence etait
+  # vert sur un menu qui ne s'ouvre pas (§6, piege 1).
+  # Les 18 traites. 4 mutations desormais, dont celle qui prouve l'ancrage.
+  # 117/117 verts, tsc et lint a 0. Lighthouse LANCE sur arbitrage : il ne
+  # peut atteindre aucune page derriere une session (REP-87), c'est ecrit.
+  # 7 constats reportes : REP-81 a 84 (5.13), REP-85 et 87 (4.7), REP-86 (5.9).
+  5-12-rebrancher-les-commandes-mortes-de-la-console: done
+  # REP-78 et REP-79, ouverts par la 5.12 en inspectant les trois barres.
+  # Aucun n'est un défaut de sécurité.
+  # ARBITRAGE RENDU le 14-08-2026 par l'éditeur : MASQUER les entrées qu'un
+  # agent ne peut pas ouvrir, plutôt que les afficher désactivées. Motif dans
+  # docs/epics.md § Story 5.13 — un outil de terrain se juge à ce qu'il ne
+  # demande pas de comprendre. Le code peut donc commencer, MAIS PAS AVANT
+  # QUE LA 5.12 SOIT `done` : on n'enchaîne pas deux stories sans accord
+  # explicite (CLAUDE.md §1), et la 5.12 attend encore sa preuve.
+  # Story ecrite le 14-08-2026. TROIS PIEGES identifies avant tout code, et
+  # le premier est bloquant : `loading.tsx` rend la barre et est SYNCHRONE,
+  # donc il ne peut pas connaitre le role. Un repli « tout afficher » ferait
+  # CLIGNOTER les cinq entrees interdites au moment ou l'agent regarde.
+  # Bonne nouvelle mesuree : `requireAgency()` retourne DEJA `userRole` et
+  # `userName`, relus en base, et 43 des 45 pages qui rendent la barre
+  # l'appellent deja — aucune requete nouvelle, et §2 respecte.
+  # Implementee le 14-08-2026. Arbitrage `loading.tsx` rendu par l'editeur :
+  # repli RESTREINT (les 12 entrees communes). `isAgencyAdmin` deplace dans
+  # lib/roles.ts — module pur — et RE-EXPORTE par auth-guard : la barre est
+  # un composant client, importer auth-guard y aurait tire prisma et auth
+  # dans le bundle du navigateur. Enveloppe serveur ECARTEE : elle coutait
+  # une requete Prisma par page sur 45 pages.
+  # 121/121 verts, tsc et lint a 0. Mutation du filtre : 2 rouges qui
+  # designent le lien masque, controle positif admin et garde restes verts.
+  # REP-78, 79, 81, 83, 84 fermes. REP-82 RESTE OUVERT (origine de sortie,
+  # arbitrage). REP-88 ouvert : <Toaster /> n'est monte nulle part.
+  # REVUE DE CODE DU 15-08-2026, trois couches jouees sur un AUTRE MODELE
+  # que celui qui a implemente (le workflow le recommande). Les trois
+  # premieres instances ont cale sur la lecture du patch ; relancees en
+  # ciblant git.
+  # Le constat le plus serieux visait ma propre justification : le bandeau
+  # d'echec vivait DANS le menu, avec pour motif « c'est le seul endroit ou
+  # l'echec peut etre annonce ». Faux — Radix ferme sur Echap et clic
+  # exterieur quoi que fasse preventDefault, donc l'echec etait invisible
+  # dans le cas meme pour lequel il avait ete ecrit. Bandeau remonte dans
+  # l'en-tete ; du coup les menus se referment de nouveau et l'ecart
+  # revendique sur AC 7 DISPARAIT au lieu d'etre justifie.
+  # Aussi : initiales decoupees par point de code (un emoji rendait une
+  # demi-paire), lien de secours au texte exact, cas bureau etendu au
+  # deroulant « Plus », cinq REP marques fermes DANS LEUR CORPS, epics.md
+  # aligne sur ce que la story couvre reellement.
+  # DEUX passes de mutation : la premiere ne prouvait pas la couverture
+  # ajoutee — le cas bureau rougissait avant d'ouvrir « Plus ». La seconde,
+  # ciblee, echoue bien sur `menuitem Corbeille`.
+  # 121/121 verts, tsc et lint a 0.
+  # REP-82 reste ouvert. REP-89 a 93 ouverts avec leur story.
+  5-13-n-afficher-que-ce-qui-s-ouvre: done
+  # BUG-36, reproduit au navigateur le 15-08-2026 contre la pile
+  # docker-compose.prod.yml : `proxy_set_header Host $host` perd le port,
+  # Next compare a l'Origin et ABANDONNE TOUTE SERVER ACTION. Les 41
+  # actions du produit sont mortes sur le deploiement documente ; seules
+  # la navigation, la connexion, les exports, les PDF et les suppressions
+  # par route API survivent.
+  # La suite E2E ne pouvait pas l'attraper : elle sert l'application en
+  # direct sur :3002, nginx n'est jamais dans le chemin (-> REP-95).
+  # La story couvre aussi la reconstruction de l'image, qui date du 09-08
+  # et accuse 67 commits de retard — elle porte encore BUG-33.
+  # UNE QUESTION RESTE OUVERTE dans la story (T3) : ou poser la preuve,
+  # puisque test:e2e ne passe pas par nginx. Arbitrage editeur.
+  # 15-08-2026 : correctif POSE et PROUVE PAR MUTATION (nginx recharge, la
+  # meme action publique passe de 500 a 303 ; la connexion valide continue
+  # d'aboutir sous mutation, donc le rouge designe bien les actions).
+  # Image reconstruite : aqar-dz:latest du 15-08 12:57. La revocation coupe
+  # desormais reellement (401 + redirection avec motif), et le masquage de
+  # la story 5.13 est en service.
+  # T3 LIVRE le 15-08 apres arbitrage de l'editeur : (a) + (c). Un script
+  # `npm run verify:deploy` qui rejoue une Server Action A TRAVERS nginx
+  # sans rien ecrire en base, et `tests/deploiement.spec.ts` qui garde les
+  # quatre relais. Les deux prouves par mutation. (b) — un projet Playwright
+  # qui se saute — ecarte : un test ignore se lit comme un test vert.
+  # `npm run test:e2e` lance avec accord explicite : 122 passed. La premiere
+  # execution avait donne 121 + 1 ECONNRESET sur /api/auth/register ; rejoue
+  # seul le cas passe en 7,2 s, rejouee en entier la suite est verte. Ale
+  # sous charge parallele, PAS enterre : REP-97 -> story 4.7.
+  5-14-rendre-au-deploiement-ses-server-actions: done
+  epic-5-retrospective: optional
+
+  # ── Épopée 6 — Vendre ce que le produit tient ────────────────────
+  # PREMIERE EPOPEE DE FONCTIONNALITE de ce depot : les epopees 0 a 5
+  # remettaient en etat, celle-ci ajoute.
+  # Source : docs/prds/prd-aqar-dz-offres-2026-08-15/prd.md (arbitrages du
+  # 15-08-2026, motifs dans son .memlog.md).
+  # Le defaut de fond, mesure : la page d'accueil vend trois offres, la base
+  # en connait deux qui ne portent aucun de ces noms, et la valeur stockee
+  # ne conditionne RIEN —
+  #   grep -rn "premium\|basic" --include="*.ts*" app/ lib/ components/ \
+  #     | grep -v app/admin/settings   -> 1 occurrence
+  # ~~BLOQUEE A L'ENTREE : la question ouverte n.1 du PRD — les plafonds
+  # exacts de chaque offre.~~ TRANCHEE le 15-08-2026, Bilal ayant delegue
+  # la decision : les plafonds sont ceux de la page tarifaire, INCHANGES —
+  # Starter 20 biens / 2 comptes, Pro illimite / 10, Enterprise illimite /
+  # illimite. Motif : ces chiffres sont deja vendus publiquement ; en
+  # inventer d'autres ouvrirait une SECONDE divergence entre la promesse et
+  # le produit, alors que l'epopee existe pour fermer la premiere.
+  # MIGRATIONS APPLIQUEES le 16-08-2026 par l'editeur (`npm run db:deploy`,
+  # dans le `deny`). Releve conforme a l'attendu ecrit AVANT la bascule —
+  # il est dans la story 6.1, section « La mesure d'apres ».
+  #
+  # ~~Ce qui reste : `npm run test:e2e` n'a jamais tourne. Les 18 cas ecrits
+  # sur l'epopee sont ECRITS, PAS VERTS, et aucune preuve par mutation n'a
+  # ete jouee. Aucune story ne passe `done` avant §9.~~ SOLDE le 16-08-2026,
+  # sur accord explicite de l'editeur (« lance la suite ») :
+  #   npm run test:e2e   -> 140 passed, 1,7 min, sortie 0
+  #   npx tsc --noEmit   -> 0 · npm run lint -> 0 erreur
+  # SEPT mutations jouees, sept rouges attribuables, tests non vises restes
+  # verts. L'une d'elles a CORRIGE L'ENONCE au lieu de le confirmer :
+  # `agencyPlanSchema` ne protege pas la donnee — l'enumeration PostgreSQL
+  # le fait seule — il fournit le REFUS LISIBLE. Le detail est dans les
+  # stories et dans le commentaire du schema.
+  # 6-1 a 6-5 sont `done` au sens de §9. L'epopee reste `in-progress` : 6.6
+  # attend un arbitrage (voir plus bas).
+  epic-6: in-progress
+  6-1-poser-le-catalogue-des-offres: done
+  # 6.1 ET 6.2 SONT OUVERTES EN MEME TEMPS, ce que CLAUDE.md §1 evite
+  # normalement. Motif, ecrit pour qu'on puisse le rouvrir : les DEUX
+  # migrations attendent la meme commande, que seul l'editeur peut lancer
+  # (`deny` de .claude/settings.json). Attendre que 6.1 soit `done` aurait
+  # voulu dire deux applications de migration au lieu d'une, pour une
+  # story dont tout le code depend deja de la premiere. Delegation
+  # explicite de Bilal le 15-08-2026.
+  #
+  # ~~Ce que le raccourci coute, dit sans l'attenuer : le code de 6.2 n'a
+  # jamais tourne. `tsc` et `lint` passent, la suite E2E n'a pas ete
+  # jouee. Aucune des deux ne passe `done` avant §9.~~ SOLDE le 16-08-2026 :
+  # la suite a tourne, les deux stories sont prouvees. Ce que le raccourci
+  # a REELLEMENT coute est mesurable et vaut d'etre garde : le rejeu de
+  # 6.1 a du etre repare par 6.3, qui a transforme le champ `plan` en
+  # `select` — un `select` refuse en silence une valeur absente de ses
+  # options, et le test aurait lu le refus d'un champ vide la ou il croit
+  # eprouver le refus d'une valeur hors catalogue.
+  6-2-recueillir-l-offre-demandee: done
+  # ~~6.3 attend VRAIMENT : elle affiche `requestedPlan`, donc elle a
+  # besoin que la colonne existe en base.~~ CORRIGE le 15-08-2026 : c'est
+  # faux tel qu'ecrit. Le code de 6.3 compile contre le client Prisma
+  # genere ; ce qu'il ne peut pas faire, c'est TOURNER — exactement comme
+  # 6.1 et 6.2. La distinction compte, parce que « attendre » et « ne pas
+  # pouvoir etre prouve » n'appellent pas la meme decision.
+  6-3-attribuer-l-offre-a-l-approbation: done
+  # 6.4 est la story dangereuse : le refus est facile, le DECOMPTE est le
+  # piege, et poser un plafond rend atteignables deux chemins qui ne
+  # comptaient pour rien — restaurer depuis la corbeille, reactiver un
+  # compte desactive. CLAUDE.md §8.
+  #
+  # A VERIFIER AVANT DE POSER LE PLAFOND DES COMPTES (releve en 6.2) :
+  # regression.spec.ts ~1608 inscrit une agence par la route publique,
+  # donc en Starter — 2 utilisateurs — puis lui cree des comptes et des
+  # depots. Le plafond peut la faire echouer. Le test se lit AVANT, pas
+  # apres l'avoir vu rougir.
+  # VERIFIE avant d'ecrire, et le constat est rassurant : aucun test ne
+  # cree de bien ni de compte PAR L'ECRAN, sauf features.spec.ts qui cree
+  # un agent sur l'agence de demonstration. Celle-ci porte 2 comptes
+  # actifs et l'offre Pro (plafond 10). ⚠ Si elle repassait en Starter
+  # (plafond 2), ce test echouerait aussitot.
+  6-4-faire-tenir-les-plafonds: done
+  6-5-dire-a-l-agence-ou-elle-en-est: done
+  # ~~6.6 porte REP-100 : la page vend six capacites que le produit ne tient
+  # pas (API, statistiques avancees, SLA...).~~ FAUX, et mesure en ouvrant
+  # la story le 16-08-2026 : REP-100 avait ete ecrit de memoire, jamais
+  # verifie — le defaut qu'il reproche au produit, commis dans le constat
+  # lui-meme (§7). L'inventaire des 19 arguments donne 6 plafonds tenus,
+  # 6 capacites LIVREES, 5 engagements de service, et 2 seulement qui ne
+  # designent rien. « Statistiques avancees » EXISTE : app/agency/
+  # statistics, 425 lignes, 6 graphiques.
+  #
+  # ARBITRAGE RENDU le 16-08-2026, delegue par l'editeur (« je te laisse
+  # trancher »), motif par categorie dans la story :
+  #   retirees   « API access », « Integrations custom » — ne designent rien
+  #   gardees    les 5 engagements de service — hors code, indecidables ici
+  #   gardees    les 6 capacites livrees — les fermer retirerait a des
+  #              agences Starter des ecrans qu'elles utilisent DEJA
+  # Garde-fou pose : ARGUMENTS_REVUS, un inventaire date. Un argument
+  # ajoute au catalogue sans revue fait rougir la suite.
+  #
+  # ~~RESTE A FAIRE avant `done` (§9) : `npm run test:e2e` et la preuve par
+  # mutation.~~ FAIT le 16-08-2026, accord §2 donne (« lance la suite ») :
+  #   npm run test:e2e   -> 141 passed (140 + le cas ajoute), 1,8 min, exit 0
+  # DEUX mutations, une par sens de l'AC-4, jouees SEPAREMENT — l'erreur de
+  # 6.3 (mutations groupees, rouge inattribuable) n'a pas ete refaite :
+  #   « API access » remis aux atouts        -> rouge, nomme « API access »
+  #   « Hotline 24/7 » ajoutee a l'inventaire -> rouge, nomme le vestige
+  # Retabli, retour au vert verifie (4 passed).
+  # REP-102 verse au passage, vers la story 4.7 : playwright.config declare
+  # 5 navigateurs, la suite n'en joue qu'un, 3 binaires ne sont pas
+  # installes. La config fabrique donc un rouge inattribuable pour qui
+  # rejoue un fichier a la main, et le responsive exige par la regle 10
+  # n'est jamais joue.
+  6-6-ne-plus-vendre-ce-qui-n-existe-pas: done
+  # 6.7 porte REP-101, le VRAI defaut restant, trouve par l'inventaire de
+  # 6.6 : hors des deux plafonds, AUCUNE capacite n'est conditionnee par
+  # l'offre. Une agence Starter a 2 900 DA a les memes ecrans qu'une Pro a
+  # 7 900 — statistiques, gestion locative, PDF, vitrine personnalisee.
+  # C'est l'INVERSE de la divergence que l'epopee a fermee : la page vend
+  # comme exclusif ce que tout le monde a deja.
+  # ELLE NE S'OUVRE PAS SANS ARBITRAGE : fermer ces capacites retirerait a
+  # des clients en cours des ecrans qu'ils utilisent. Fermer avec bascule,
+  # reformuler, ou revoir l'ecart de prix — c'est l'editeur qui tranche.
+  6-7-fermer-ou-cesser-de-vendre-comme-exclusif: backlog
+  epic-6-retrospective: optional
+
+# Points d'attention ouverts, à traiter avant ou pendant les épopées.
+action_items:
+  - epic: 0
+    action: "Choisir où déposer les sauvegardes : stockage objet distant, ou seconde machine. Décision préalable à la story 0-1."
+    owner: "Bilal"
+    status: done
+    note: >-
+      Tranché le 10-08-2026 : stockage objet distant compatible S3, pas de
+      seconde machine. Motif et critères d'acceptation dans docs/epics.md,
+      story 0.1. L'implémentation ne dépend que de S3_ENDPOINT, S3_BUCKET,
+      S3_ACCESS_KEY, S3_SECRET_KEY — le fournisseur reste remplaçable.
+  - epic: 0
+    action: >-
+      Ouvrir un bucket chez un fournisseur compatible S3 et fournir les quatre
+      variables. Le choix du fournisseur est juridique autant que technique :
+      les archives contiennent des pièces d'identité et des actes de propriété
+      de clients algériens, la juridiction du stockage doit être assumée.
+      Seul point qui bloque encore l'implémentation de la story 0-1.
+    owner: "Bilal"
+    status: open
+  - epic: 0
+    action: "Choisir le service de collecte d'erreurs (story 0-3), en vérifiant qu'aucune donnée personnelle d'agence ne lui est transmise."
+    owner: "Bilal"
+    status: open
+  - epic: 1
+    action: "Révoquer la clé Figma chez Figma — supprimer le fichier ne la désactive pas."
+    owner: "Bilal"
+    status: open
+    note: >-
+      ROUVERT le 13-08-2026, et le report est levé. Il avait été décidé le
+      10-08-2026 en connaissance de cause ; sa seule justification était que
+      Figma servait encore. L'éditeur a tranché : FIGMA EST ABANDONNÉ. La
+      révocation ne coûte donc plus rien — aucun usage n'en dépend — et
+      c'est le SEUL remède réel : Figma est sorti du dépôt le 13-08-2026,
+      la clé est toujours valide. Deux emplacements, pas un : l'historique
+      de main (commit a529f61) et origin/feature/design-improvements, qui
+      suit ENCORE mcp-config.json et qui est poussée sur GitHub (REP-77).
+      Purger l'historique de main seul n'aurait pas fermé le défaut.
+      Une fois la clé révoquée, la purge devient sans objet.
+  - epic: 1
+    action: >-
+      Trancher le sort de la branche distante
+      `origin/feature/design-improvements` : suppression, ou conservation en
+      archive. Elle porte 58 commits jamais fusionnés (modules Équipe,
+      Contacts, Notifications, Maintenance, Journal d'activité, Centre
+      d'aide, génération de contrats) sur une architecture et un schéma qui
+      ont divergé de main depuis le 25-05-2026 — ce n'est pas une branche à
+      fusionner. Décision distincte de la révocation, qui reste le remède.
+    owner: "Bilal"
+    status: open
+  - epic: 5
+    action: "Trancher : un super admin doit-il pouvoir endosser une agence pour la dépanner ? Décision produit, préalable à la story 5-1."
+    owner: "Bilal"
+    status: open
+    note: >-
+      Devenu concret avec la story 1.3 : un super admin reçoit désormais 401
+      sur tout document d'agence, faute d'agencyId. Position sûre assumée,
+      pas contournée.
+  - epic: 1
+    action: >-
+      Ouvrir un second seau Supabase, privé, dédié aux documents, avant toute
+      bascule vers le stockage objet. Le seau actuel est public et partagé
+      avec les photos de vitrine : la protection posée par la story 1.3 ne
+      s'y applique pas. En attendant, le serveur refuse de fonctionner dans
+      ce mode (lib/env.ts) — un déploiement Supabase est donc impossible.
+    owner: "Bilal"
+    status: open
+  - epic: 1
+    action: "Les 5 stories manuscrites de docs/stories/story-0X-*.md couvrent 18 des 31 défauts. Les relire comme matière première au moment de bmad-create-story, sans les considérer comme à jour."
+    owner: "Bilal"
+    status: open
+  - epic: 0
+    action: "Commiter l'installation BMAD (_bmad/ et .claude/skills/), que .gitignore déclare versionnée à dessein."
+    owner: "Bilal"
+    status: done
+    note: "Fait — commit 3a1f951, 926 fichiers."
+  - epic: 5
+    action: "tsconfig.tsbuildinfo (236 Ko) suivi par git : git rm --cached puis l'ajouter à .gitignore (BUG-31, story 5-7)."
+    owner: "Bilal"
+    status: done
+    note: "Fait par anticipation — commit 256d1a4. La story 5-7 n'a plus que la directive nginx (BUG-30) à traiter."
+  - epic: 1
+    action: "BUG-19 partiellement traité hors cycle : mcp-config.json est sorti du suivi git (commit 256d1a4) et mcp-config.example.json le remplace. La story 1-1 garde l'essentiel — RÉVOQUER la clé chez Figma, et décider si l'historique doit être purgé."
+    owner: "Bilal"
+    status: done
+    note: >-
+      Repris par la story 1-1 le 13-08-2026, sur arbitrage « Figma
+      abandonné » : mcp-config.example.json est à son tour supprimé, il n'y
+      a plus aucune configuration MCP dans le dépôt. Ce point d'attention
+      est donc soldé, mais il ne solde RIEN du défaut : la révocation reste
+      ouverte au point d'attention ci-dessus, et c'est elle qui compte.
+  - epic: 1
+    action: >-
+      Trancher la durée d'une session. Aucun `maxAge` n'est posé aujourd'hui :
+      la valeur est celle par défaut de NextAuth, trente jours. Décision
+      préalable au code de la story 1-8 (AC 6).
+    owner: "Bilal"
+    status: done
+    note: >-
+      Tranché le 12-08-2026, par délégation explicite de l'éditeur.
+      DOUZE HEURES. Trente jours n'est pas une session, c'est un identifiant
+      permanent laissé dans un navigateur : sur un outil qui détient des
+      pièces d'identité et des actes de propriété, la durée d'un accès ne
+      doit pas survivre au poste de travail. Douze heures couvrent la
+      journée d'une agence, du matin au soir ; le coût est une reconnexion
+      par jour, et c'est le prix normal. Réversible en une ligne de
+      auth.config.ts — si les agences se plaignent, la valeur monte, mais
+      elle part de ce qui protège et non de ce qui est confortable.
+  - epic: 1
+    action: >-
+      Décider si le dépôt doit conserver la stratégie JWT ou passer à des
+      sessions en base. La question est ouverte par le défaut n° 33 et n'est
+      PAS tranchée par les stories 1-8 et 5-8, qui la contournent toutes deux.
+      À rouvrir seulement si un besoin réel de déconnexion immédiate et
+      centralisée apparaît (multi-instances, exigence d'un client).
+    owner: "Bilal"
+    status: open
+    note: >-
+      Ce n'est pas un correctif mais une décision d'architecture : la
+      stratégie JWT est une règle de CLAUDE.md §12 (règle 4), elle ne se change
+      pas dans une story de remise en état.
+  - epic: 4
+    action: >-
+      Trancher qui peut supprimer une échéance de gestion locative, et qui peut
+      supprimer une ligne d'historique d'interaction. Ces deux actions n'ont
+      aucune route d'API homologue : contrairement au bien, à la visite et au
+      paiement, aucune règle n'est déjà écrite ailleurs dans le code. Décision
+      préalable au code de la story 4-6 (AC 4).
+    owner: "Bilal"
+    status: done
+    note: >-
+      Tranché le 12-08-2026, par délégation explicite de l'éditeur.
+      ÉCHÉANCE DE GESTION LOCATIVE → administrateur. Une échéance est une ligne
+      comptable : la supprimer fausse le décompte du net à reverser au
+      propriétaire, et l'erreur ne se voit qu'au moment du versement, chez le
+      propriétaire. Le coût d'une permission trop étroite est un agent qui
+      demande à son administrateur ; le coût de l'inverse est un litige.
+      INTERACTION → agent, mais journalisée. C'est une ligne d'historique de
+      contact, saisie par l'agent lui-même à l'instant : la réserver rendrait
+      une faute de frappe ineffaçable pour celui qui l'a commise, ce qui
+      pousserait à contourner l'outil. Le journal d'audit couvre l'abus.
+      Réversible tant que la story 4-6 n'a pas commencé — c'est une ligne de
+      garde à changer, pas une architecture.

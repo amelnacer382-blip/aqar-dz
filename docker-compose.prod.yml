@@ -1,0 +1,282 @@
+# ==========================================
+# Aqar DZ - Déploiement production
+# ==========================================
+#
+# Le fichier docker-compose.yml voisin sert le développement : il monte le
+# code source dans le conteneur et lance `next dev`. Il n'a pas sa place
+# sur une machine déployée — le code y serait rechargé à chaud depuis un
+# dossier hôte, et une machine de production n'a pas de dossier hôte.
+#
+# Celui-ci construit l'image autonome, applique les migrations dans un
+# conteneur séparé, puis démarre l'application derrière nginx.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml --profile seed run --rm seed
+#
+# Le nom de projet est distinct : les deux environnements peuvent coexister
+# sur la même machine sans que l'un écrase les conteneurs de l'autre.
+
+name: aqar-prod
+
+services:
+  # --- Base de données PostgreSQL ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: aqar-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aqar_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?variable requise. Generez-en une avec `openssl rand -base64 24` puis posez-la dans .env}
+      POSTGRES_DB: ${POSTGRES_DB:-aqar_db}
+    ports:
+      # LIEE A LA BOUCLE LOCALE (BUG-27, story 2.4).
+      #
+      # Elle etait publiee sur toutes les interfaces — verifie,
+      # `0.0.0.0:5433` et `[::]:5433` en ecoute — avec un mot de passe de
+      # repli ecrit dans le depot. Un pare-feu mal regle devenait une
+      # compromission totale : lecture ET ecriture de toutes les agences,
+      # sans rencontrer une seule des gardes du code applicatif.
+      #
+      # Elle n'est pas supprimee, et c'est delibere : `.env` porte un
+      # DATABASE_URL vu depuis l'HOTE (`localhost:5433`), qui sert a
+      # `npm run dev`, a Prisma Studio et a la suite de tests — celle-ci
+      # lance `next start` sur la machine, pas dans Docker. Retirer la
+      # publication rendrait la suite inexecutable.
+      #
+      # Les SAUVEGARDES, elles, n'en dependent pas : la procedure du
+      # README passe par `docker exec … pg_dump`, donc par le conteneur.
+      # La premiere redaction de ce commentaire les citait a tort.
+      #
+      # Pour une base, la menace est l'acces DISTANT : la liaison locale
+      # la ferme aux autres machines et laisse le poste travailler.
+      #
+      # « Fermee aux autres machines » repose sur une propriete du DEMON
+      # Docker, pas sur ce fichier : depuis la version 28, le routage
+      # direct vers les adresses de conteneurs est bloque par defaut. Sur
+      # un demon plus ancien, ou lance avec `--ip-forward-no-drop`, une
+      # machine du reseau local qui ajoute une route vers le sous-reseau
+      # Docker atteindrait le conteneur. Aucun test ne le verifie. Le conteneur applicatif n'est pas concerne, il joint
+      # `postgres` par le reseau Docker.
+      #
+      # Reserve identique a celle du service applicatif : un processus
+      # tournant sur l'hote joint aussi le conteneur par son adresse de
+      # reseau Docker. Meme remede — une regle DOCKER-USER.
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aqar_user} -d ${POSTGRES_DB:-aqar_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aqar-network
+
+  # --- Migrations de schéma ---
+  #
+  # Conteneur éphémère, exécuté avant l'application et sorti aussitôt.
+  #
+  # Il est bâti sur l'étape « builder », la seule qui contienne le CLI
+  # Prisma et le dossier prisma/migrations : l'image de production ne
+  # contient que le serveur compilé, volontairement — un runtime capable de
+  # modifier le schéma de la base est une surface d'attaque gratuite.
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: builder
+    image: aqar-dz-toolbox:latest
+    container_name: aqar-migrate-prod
+    command: ["npx", "prisma", "migrate", "deploy"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aqar_user}:${POSTGRES_PASSWORD:?variable requise. Generez-en une avec `openssl rand -base64 24` puis posez-la dans .env}@postgres:5432/${POSTGRES_DB:-aqar_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - aqar-network
+
+  # --- Application Next.js (Frontend + API) ---
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: production
+      args:
+        # Le commit dont cette image sera issue — REP-96, story 2.8.
+        #
+        # A POSER SUR LA LIGNE DE COMMANDE, Compose ne sait pas le calculer :
+        #
+        #   COMMIT_SHA=$(git rev-parse HEAD) \
+        #     docker compose -f docker-compose.prod.yml up -d --build
+        #
+        # Le README porte cette forme. L'oublier ne casse rien : le repli
+        # `:-` grave une valeur vide, et la sonde repond « inconnu » — ce
+        # qui se lit, contrairement a un champ absent.
+        #
+        # Ce n'est PAS lu depuis `.git` : `.dockerignore` l'exclut du
+        # contexte de build, deliberement.
+        COMMIT_SHA: ${COMMIT_SHA:-}
+    image: aqar-dz:latest
+    container_name: aqar-frontend-prod
+    restart: unless-stopped
+    # L'application n'est plus PUBLIEE sur l'hote (BUG-22, story 2.1).
+    #
+    # Elle publiait `3000:3000`, donc sur toutes les interfaces : nginx
+    # cessait d'etre un passage oblige pour QUICONQUE, depuis n'importe
+    # quelle machine. C'etait le defaut, et il est ferme.
+    #
+    # CE QUE CELA NE FERME PAS, et il faut le dire ici plutot que le
+    # decouvrir : retirer `ports` supprime la redirection depuis l'hote,
+    # pas l'adresse du conteneur. Un processus tournant SUR LA MACHINE
+    # joint toujours l'application par l'adresse que Docker lui donne sur
+    # le reseau du projet. Verifie :
+    #
+    #   curl http://localhost:3000/api/public/health   -> connexion refusee
+    #   curl http://192.168.0.2:3000/api/public/health -> 200
+    #
+    # Aucun reglage de ce fichier n'y change quoi que ce soit — un reseau
+    # `internal: true` a ete essaye, l'hote y accede pareillement. La
+    # seule fermeture reelle est une regle de pare-feu dans la chaine
+    # DOCKER-USER d'iptables, qui est le point d'accroche prevu pour cela
+    # et qui survit aux redemarrages du demon :
+    #
+    #   iptables -I DOCKER-USER -i <interface-hote> -d <sous-reseau> \
+    #            -p tcp --dport 3000 -j DROP
+    #
+    # Consequence a garder en tete : l'identification de l'appelant
+    # (story 1.4) est fiable face a un appelant DISTANT, pas face a un
+    # processus local. Sur un serveur ou l'on ne fait tourner que cette
+    # pile, c'est acceptable ; sur une machine partagee, non.
+    #
+    # `expose` ci-dessous est PUREMENT DOCUMENTAIRE : sur un reseau bridge
+    # defini par l'utilisateur, nginx joindrait le port sans cela. Il est
+    # garde parce qu'il enonce le contrat — un port pour le reseau, aucun
+    # pour l'hote.
+    #
+    # Pour un acces direct de diagnostic, `docker exec` et
+    # `docker compose logs` font mieux. A defaut, la ligne ci-dessous le
+    # retablit sur la seule boucle locale ; elle n'ajoute presque rien au
+    # risque deja decrit, mais elle ajoute une porte de plus a fermer le
+    # jour ou l'on ecrira la regle DOCKER-USER :
+    #
+    #   ports:
+    #     - "127.0.0.1:${APP_PORT:-3000}:3000"
+    expose:
+      - "3000"
+    # Le conteneur ne lit pas .env tout seul : sans cette ligne, SMTP et
+    # Supabase pouvaient être parfaitement configurés sur l'hôte et rester
+    # invisibles à l'intérieur — aucun email ne serait parti.
+    env_file:
+      - .env
+    environment:
+      # Ces trois valeurs priment sur celles du fichier : à l'intérieur du
+      # réseau Docker, la base répond au nom « postgres », pas sur le port
+      # décalé publié vers l'hôte.
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aqar_user}:${POSTGRES_PASSWORD:?variable requise. Generez-en une avec `openssl rand -base64 24` puis posez-la dans .env}@postgres:5432/${POSTGRES_DB:-aqar_db}
+      UPLOAD_DIR: ./public/uploads
+    volumes:
+      - uploads_data:/app/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # La sonde interroge la base, pas seulement le processus : un serveur
+      # qui répond sans pouvoir lire ses données ne rend aucun service.
+      test:
+        ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/public/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    networks:
+      - aqar-network
+
+  # --- Reverse Proxy nginx ---
+  nginx:
+    image: nginx:alpine
+    container_name: aqar-nginx-prod
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-8095}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Le meme volume que l'application, en lecture seule : nginx sert les
+      # photos et documents televerses sans passer par Node.
+      - uploads_data:/var/www/uploads:ro
+    depends_on:
+      - frontend
+    networks:
+      - aqar-network
+
+  # --- Jeu de données de démonstration (à la demande) ---
+  #
+  # Sous un profil : il ne démarre jamais avec `up`. Le seed recrée les
+  # entités métier de l'agence de démonstration à chaque passage — lancé
+  # par inadvertance sur une base réelle, il écraserait du travail.
+  #
+  #   docker compose -f docker-compose.prod.yml --profile seed run --rm seed
+  seed:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: builder
+    image: aqar-dz-toolbox:latest
+    container_name: aqar-seed-prod
+    profiles: ["seed"]
+    command: ["npm", "run", "db:seed"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aqar_user}:${POSTGRES_PASSWORD:?variable requise. Generez-en une avec `openssl rand -base64 24` puis posez-la dans .env}@postgres:5432/${POSTGRES_DB:-aqar_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - aqar-network
+
+volumes:
+  # Les deux volumes sont DECLARES `external` — story 2.7, REP-103, 17-08-2026.
+  #
+  # Le motif tient en une commande : `docker compose down -v`. Elle est
+  # banale, elle s'ecrit a trois caracteres pres comme `down`, et elle
+  # effaçait la base ET tous les fichiers televerses. Le depot ECRIVAIT ce
+  # danger a deux endroits — README.md et docs/architecture.md, « survit au
+  # redeploiement, pas a `down -v` » — sans jamais s'en proteger. Il n'y a
+  # toujours aucune sauvegarde automatique (story 0.1) : l'effacement est
+  # donc definitif au sens strict.
+  #
+  # MESURE, sur un projet Compose jetable et jamais sur celui-ci. Sous un
+  # projet `t7`, un volume ordinaire `postgres_data` s'appelle
+  # `t7_postgres_data` — exactement comme ici sous `aqar-prod`. Les deux
+  # branches portent donc le meme nom, seule la declaration change :
+  #
+  #   ordinaire  ->  Volume t7_postgres_data Removed   (marqueur perdu)
+  #   external   ->  down -v ne mentionne meme pas le volume, marqueur intact
+  #
+  # `name:` EST OBLIGATOIRE, et c'est la moitie du correctif. Sans lui,
+  # `external` ferait chercher un volume litteralement nomme `postgres_data`,
+  # qui n'existe pas. Mesure de ce cas-la aussi :
+  #
+  #   external volume "t7_nom_faux" not found   -> sortie 1, AUCUN conteneur
+  #
+  # C'est ce qui rend l'echange acceptable : se tromper de nom coute un
+  # redemarrage, pas des donnees. En contrepartie, une installation NEUVE
+  # doit creer les volumes a la main avant le premier `up` — le README le dit.
+  #
+  # Ce que cela ne ferme pas : `docker volume rm`, explicite et delibere.
+  # On ferme le geste accidentel, pas le geste voulu.
+  postgres_data:
+    external: true
+    name: aqar-prod_postgres_data
+  uploads_data:
+    external: true
+    name: aqar-prod_uploads_data
+
+networks:
+  aqar-network:
+    driver: bridge

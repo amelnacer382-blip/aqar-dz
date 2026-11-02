@@ -1,0 +1,773 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  super_admin
+  agency_admin
+  agent
+}
+
+enum AgencyStatus {
+  pending
+  active
+  suspended
+}
+
+/// L'offre d'abonnement attribuee a une agence.
+///
+/// Le catalogue — tarifs, arguments de vente, plafonds — vit dans
+/// `lib/offres.ts` et nulle part ailleurs. Ici ne sont que les cles.
+///
+/// Remplace la colonne `plan String @default("basic")`, qui acceptait
+/// n'importe quoi et ne portait aucun des noms vendus sur la page
+/// tarifaire. Migration 20260815000000_agency_plan_enum : `basic` devient
+/// `starter`, `premium` devient `pro`.
+enum AgencyPlan {
+  starter
+  pro
+  enterprise
+}
+
+enum PropertyType {
+  appartement
+  villa
+  studio
+  duplex
+  maison
+  residence
+  terrain_constructible
+  local_commercial
+  boutique
+  showroom
+  restaurant
+  cafe
+  magasin
+  bureau
+  cabinet_medical
+  espace_coworking
+  immeuble_professionnel
+  plateau_bureaux
+  hangar
+  entrepot
+  usine
+  depot
+  terrain_industriel
+  bungalow
+  villa_vacances
+  residence_estivale
+  appartement_saisonnier
+  chalet
+  maison_hotes
+  terrain_agricole
+  ferme
+  exploitation_agricole
+  serre_agricole
+  domaine_agricole
+}
+
+enum PropertyCategory {
+  residentiel
+  commercial
+  professionnel
+  industriel
+  touristique
+  agricole
+}
+
+enum PropertyStatus {
+  disponible
+  vendu
+  loue
+  reserve
+  archive
+}
+
+enum OperationType {
+  vente
+  location
+  gestion_locative
+}
+
+enum ClientType {
+  acheteur
+  locataire
+  investisseur
+  interesse
+}
+
+enum ClientStatus {
+  nouveau
+  interesse
+  visite_prevue
+  client_chaud
+  conclu
+  perdu
+}
+
+enum VisitStatus {
+  prevue
+  effectuee
+  annulee
+  reportee
+}
+
+enum SaleStatus {
+  negociation
+  compromis
+  vendu
+  annule
+}
+
+enum RentalStatus {
+  active
+  terminee
+  annulee
+}
+
+enum PaymentType {
+  loyer
+  caution
+  commission_agence
+  frais_dossier
+  avance
+  paiement_proprietaire
+  abonnement_saas
+}
+
+enum PaymentMethod {
+  cash
+  virement
+  ccp
+  autre
+}
+
+enum PaymentStatus {
+  paye
+  partiel
+  impaye
+}
+
+enum DocumentType {
+  contrat_vente
+  contrat_location
+  recu_paiement
+  fiche_bien
+  rapport_proprietaire
+  piece_identite
+  acte_propriete
+  image_bien
+  plan_bien
+}
+
+enum InteractionType {
+  appel
+  email
+  sms
+  rendez_vous
+  visite
+  note
+  relance
+}
+
+enum InterestLevel {
+  tres_interesse
+  interesse
+  mitige
+  pas_interesse
+}
+
+enum LeadStatus {
+  nouveau
+  traite
+  archive
+}
+
+// ==========================================
+// NEXTAUTH TABLES
+// ==========================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// ==========================================
+// USER
+// ==========================================
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime? @map("email_verified")
+  image          String?
+  password       String?
+  role           UserRole  @default(agent)
+  agencyId       String?   @map("agency_id")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  agency        Agency?             @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  accounts      Account[]
+  sessions      Session[]
+  resetTokens   PasswordResetToken[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+// ==========================================
+// AGENCY
+// ==========================================
+
+model Agency {
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  phone       String?
+  address     String?
+  wilaya      String?
+  commune     String?
+  logo        String?
+  status      AgencyStatus @default(pending)
+  /// L'offre ATTRIBUEE. Pas celle que l'agence a demandee : la demande est
+  /// une intention, l'attribution une decision de l'editeur (story 6.3).
+  /// Seule cette colonne conditionnera les plafonds (story 6.4).
+  plan        AgencyPlan   @default(starter)
+
+  /// L'offre DEMANDEE a l'inscription. Une intention, jamais un droit :
+  /// aucun plafond ne la lit, et aucun ne la lira (story 6.2, FR-5). Elle
+  /// n'existe que pour que le super administrateur voie ce qui a ete
+  /// demande au moment ou il tranche (story 6.3).
+  ///
+  /// NULLE EST UN ETAT, PAS UN TROU. Les agences inscrites avant la story
+  /// 6.2 n'ont rien demande, celles creees par la console ni par la graine
+  /// non plus. Leur poser une valeur inventerait un choix du client, que
+  /// l'ecran d'approbation afficherait ensuite comme tel.
+  requestedPlan AgencyPlan? @map("requested_plan")
+
+  // --- Abonnement ---
+  /// Date jusqu'a laquelle l'agence a paye.
+  ///
+  /// Il n'y a pas de prelevement automatique : l'encaissement se fait hors
+  /// du logiciel (virement, especes), et l'editeur reporte ici la date
+  /// couverte. Sans cette colonne, rien en base ne disait qui avait paye
+  /// et jusqu'a quand — l'information vivait dans un carnet.
+  ///
+  /// Nulle = aucune echeance suivie (agence en essai, ou compte offert).
+  /// L'echeance ne coupe rien toute seule : c'est le statut de l'agence
+  /// qui donne ou retire l'acces, et il reste une decision humaine.
+  subscriptionEndsAt DateTime? @map("subscription_ends_at")
+
+  // --- Vitrine publique ---
+  slug            String?  @unique
+  description     String?  @db.Text
+  showcaseEnabled Boolean  @default(true) @map("showcase_enabled")
+  primaryColor    String   @default("#0f172a") @map("primary_color")
+
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  users        User[]
+  properties   Property[]
+  owners       Owner[]
+  clients      Client[]
+  visits       Visit[]
+  sales        Sale[]
+  rentals      Rental[]
+  payments     Payment[]
+  documents    Document[]
+  interactions Interaction[]
+  leads        Lead[]
+  auditLogs    AuditLog[]
+
+  @@map("agencies")
+}
+
+// ==========================================
+// PROPERTY
+// ==========================================
+
+model Property {
+  id                String           @id @default(cuid())
+  reference         String           @unique @default(cuid())
+  title             String
+  category          PropertyCategory
+  type              PropertyType
+  status            PropertyStatus   @default(disponible)
+  operationType     OperationType    @map("operation_type")
+  salePrice         Decimal?         @map("sale_price") @db.Decimal(15, 2)
+  rentPrice         Decimal?         @map("rent_price") @db.Decimal(15, 2)
+  currency          String           @default("DZD")
+  wilaya            String
+  commune           String
+  quartier          String?
+  address           String?
+  surface           Float?
+  rooms             Int?
+  bedrooms          Int?
+  bathrooms         Int?
+  floor             Int?
+  totalFloors       Int?             @map("total_floors")
+  hasGarage         Boolean          @default(false) @map("has_garage")
+  hasGarden         Boolean          @default(false) @map("has_garden")
+  hasTerrace        Boolean          @default(false) @map("has_terrace")
+  isFurnished       Boolean          @default(false) @map("is_furnished")
+  shortDescription  String?          @map("short_description")
+  description       String?          @db.Text
+  commission        Decimal?         @db.Decimal(5, 2)
+  agencyId          String           @map("agency_id")
+  ownerId           String?          @map("owner_id")
+  isAvailable       Boolean          @default(true) @map("is_available")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  // Suppression reversible : la ligne reste, mais disparait des listes.
+  deletedAt         DateTime?        @map("deleted_at")
+
+  agency   Agency          @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  owner    Owner?          @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  images   PropertyImage[]
+  visits   Visit[]
+  sales    Sale[]
+  rentals  Rental[]
+  payments Payment[]
+  leads    Lead[]
+
+  @@index([agencyId])
+  @@index([status])
+  @@index([operationType])
+  @@index([type])
+  @@index([wilaya])
+  @@index([deletedAt])
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         String  @id @default(cuid())
+  url        String
+  isMain     Boolean @default(false) @map("is_main")
+  sortOrder  Int     @default(0) @map("sort_order")
+  propertyId String  @map("property_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_images")
+}
+
+// ==========================================
+// OWNER
+// ==========================================
+
+model Owner {
+  id           String   @id @default(cuid())
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  phone        String?
+  email        String?
+  address      String?
+  idCardNumber String?  @map("id_card_number")
+  notes        String?  @db.Text
+  agencyId     String   @map("agency_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  deletedAt    DateTime? @map("deleted_at")
+
+  agency    Agency     @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  properties Property[]
+  sales        Sale[]
+  rentals      Rental[]
+  payments     Payment[]
+  interactions Interaction[]
+
+  @@index([agencyId])
+  @@index([deletedAt])
+  @@map("owners")
+}
+
+// ==========================================
+// CLIENT
+// ==========================================
+
+model Client {
+  id              String       @id @default(cuid())
+  firstName       String       @map("first_name")
+  lastName        String       @map("last_name")
+  phone           String?
+  email           String?
+  budget          Decimal?     @db.Decimal(15, 2)
+  propertyType    PropertyType? @map("property_type")
+  wilaya          String?
+  category        PropertyCategory?
+  type            ClientType   @default(interesse)
+  status          ClientStatus @default(nouveau)
+  notes           String?      @db.Text
+  agencyId        String       @map("agency_id")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  deletedAt       DateTime?    @map("deleted_at")
+
+  agency Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  visits Visit[]
+  sales        Sale[]
+  rentals      Rental[]
+  payments     Payment[]
+  interactions Interaction[]
+
+  @@index([agencyId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("clients")
+}
+
+// ==========================================
+// VISIT
+// ==========================================
+
+model Visit {
+  id         String      @id @default(cuid())
+  date       DateTime
+  time       String
+  clientId   String      @map("client_id")
+  propertyId String      @map("property_id")
+  agentId    String?     @map("agent_id")
+  status     VisitStatus @default(prevue)
+  result     String?     @db.Text
+  notes      String?     @db.Text
+
+  // --- Retour structure apres visite ---
+  interestLevel   InterestLevel? @map("interest_level")
+  rating          Int?
+  priceFeedback   String?        @map("price_feedback")
+  followUpDate    DateTime?      @map("follow_up_date")
+  reminderSent    Boolean        @default(false) @map("reminder_sent")
+
+  agencyId   String      @map("agency_id")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agency   Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@index([agencyId])
+  @@index([clientId])
+  @@index([propertyId])
+  @@index([status])
+  @@map("visits")
+}
+
+// ==========================================
+// SALE
+// ==========================================
+
+model Sale {
+  id            String     @id @default(cuid())
+  propertyId    String     @map("property_id")
+  clientId      String     @map("client_id")
+  ownerId       String?    @map("owner_id")
+  finalPrice    Decimal    @map("final_price") @db.Decimal(15, 2)
+  commission    Decimal?   @db.Decimal(15, 2)
+  saleDate      DateTime   @map("sale_date")
+  status        SaleStatus @default(negociation)
+  documents     String[]
+  agencyId      String     @map("agency_id")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agency   Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  owner    Owner?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  payments Payment[]
+
+  @@index([agencyId])
+  @@index([propertyId])
+  @@index([clientId])
+  @@index([status])
+  @@map("sales")
+}
+
+// ==========================================
+// RENTAL
+// ==========================================
+
+model Rental {
+  id           String       @id @default(cuid())
+  propertyId   String       @map("property_id")
+  clientId     String       @map("client_id")
+  ownerId      String?      @map("owner_id")
+  startDate    DateTime     @map("start_date")
+  endDate      DateTime?    @map("end_date")
+  monthlyRent  Decimal      @map("monthly_rent") @db.Decimal(15, 2)
+  deposit      Decimal?     @db.Decimal(15, 2)
+  agencyFees   Decimal?     @map("agency_fees") @db.Decimal(15, 2)
+  status       RentalStatus @default(active)
+  documents    String[]
+  agencyId     String       @map("agency_id")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  property          Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agency            Agency             @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  client            Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  owner             Owner?             @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  rentalManagements RentalManagement[]
+  payments          Payment[]
+
+  @@index([agencyId])
+  @@index([propertyId])
+  @@index([clientId])
+  @@index([status])
+  @@map("rentals")
+}
+
+// ==========================================
+// RENTAL MANAGEMENT
+// ==========================================
+
+model RentalManagement {
+  id              String   @id @default(cuid())
+  reference       String   @unique @default(cuid())
+  rentalId        String   @map("rental_id")
+  month           Int
+  year            Int
+  rentAmount      Decimal  @map("rent_amount") @db.Decimal(15, 2)
+  charges         Decimal? @db.Decimal(15, 2)
+  expenses        Decimal? @db.Decimal(15, 2)
+  commission      Decimal? @db.Decimal(15, 2)
+  amountToOwner   Decimal? @map("amount_to_owner") @db.Decimal(15, 2)
+  isPaid          Boolean  @default(false) @map("is_paid")
+  paymentDate     DateTime? @map("payment_date")
+  receiptUrl      String?  @map("receipt_url")
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@unique([rentalId, month, year])
+  @@index([rentalId])
+  @@map("rental_managements")
+}
+
+// ==========================================
+// PAYMENT
+// ==========================================
+
+model Payment {
+  id        String        @id @default(cuid())
+  reference String        @unique @default(cuid())
+  amount    Decimal       @db.Decimal(15, 2)
+  type      PaymentType
+  date      DateTime
+  method    PaymentMethod @default(cash)
+  status    PaymentStatus @default(paye)
+  receipt   String?
+  notes     String?       @db.Text
+
+  // --- Rattachements : a quoi ce paiement correspond-il ---
+  propertyId String? @map("property_id")
+  clientId   String? @map("client_id")
+  ownerId    String? @map("owner_id")
+  rentalId   String? @map("rental_id")
+  saleId     String? @map("sale_id")
+
+  agencyId  String   @map("agency_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  client   Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  owner    Owner?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  rental   Rental?   @relation(fields: [rentalId], references: [id], onDelete: SetNull)
+  sale     Sale?     @relation(fields: [saleId], references: [id], onDelete: SetNull)
+
+  @@index([agencyId])
+  @@index([type])
+  @@index([status])
+  @@index([propertyId])
+  @@index([rentalId])
+  @@map("payments")
+}
+
+// ==========================================
+// INTERACTION (historique clients / proprietaires)
+// ==========================================
+
+model Interaction {
+  id        String          @id @default(cuid())
+  type      InteractionType
+  subject   String
+  content   String?         @db.Text
+  date      DateTime        @default(now())
+  authorId  String?         @map("author_id")
+
+  clientId String? @map("client_id")
+  ownerId  String? @map("owner_id")
+  agencyId String  @map("agency_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  agency Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  owner  Owner?  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([agencyId])
+  @@index([clientId])
+  @@index([ownerId])
+  @@map("interactions")
+}
+
+// ==========================================
+// LEAD (message recu depuis la vitrine publique)
+// ==========================================
+
+model Lead {
+  id         String     @id @default(cuid())
+  firstName  String     @map("first_name")
+  lastName   String     @map("last_name")
+  phone      String?
+  email      String?
+  message    String     @db.Text
+  status     LeadStatus @default(nouveau)
+  propertyId String?    @map("property_id")
+  agencyId   String     @map("agency_id")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@index([agencyId])
+  @@index([status])
+  @@map("leads")
+}
+
+// ==========================================
+// DOCUMENT
+// ==========================================
+
+model Document {
+  id       String       @id @default(cuid())
+  name     String
+  type     DocumentType
+  url      String
+  size     Int?
+  mimeType String?      @map("mime_type")
+  agencyId String       @map("agency_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@index([agencyId])
+  @@index([type])
+  @@map("documents")
+}
+
+// ==========================================
+// REINITIALISATION DE MOT DE PASSE
+// ==========================================
+
+/// Jeton a usage unique pour reinitialiser un mot de passe.
+///
+/// Seul le hachage du jeton est stocke : une fuite de la table ne permet pas
+/// de prendre la main sur un compte. Le jeton en clair n'existe que dans le
+/// lien envoye a l'utilisateur.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique @map("token_hash")
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+// ==========================================
+// JOURNAL D'AUDIT
+// ==========================================
+
+/// Trace des actions consequentes : suppressions, restaurations, changements
+/// de statut, gestion des comptes.
+///
+/// On enregistre le nom de l'auteur en clair en plus de son identifiant :
+/// un compte supprime ne doit pas effacer la trace de ce qu'il a fait.
+model AuditLog {
+  id         String   @id @default(cuid())
+  agencyId   String?  @map("agency_id")
+  userId     String?  @map("user_id")
+  userName   String?  @map("user_name")
+  action     String
+  entity     String
+  entityId   String?  @map("entity_id")
+  summary    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  agency Agency? @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([agencyId, createdAt])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}
