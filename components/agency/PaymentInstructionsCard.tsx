@@ -49,7 +49,7 @@ export function PaymentInstructionsCard({
               Modalités de règlement & Renouvellement
             </CardTitle>
             <CardDescription className="mt-1 text-slate-600">
-              Coordonnées officielles pour régler votre abonnement par BaridiMob, CCP ou Virement bancaire.
+              Coordonnées officielles pour régler l&apos;abonnement de votre agence ({agencyName}) par BaridiMob, CCP ou Virement bancaire.
             </CardDescription>
           </div>
           <Badge variant="outline" className="border-dar-blue/40 text-dar-blue bg-dar-blue/5">
