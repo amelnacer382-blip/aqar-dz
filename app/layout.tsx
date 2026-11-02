@@ -1,30 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], display: "swap" });
-
-/**
- * Bricolage Grotesque porte les titres : ses formes legerement condensees
- * et ses contreformes anguleuses donnent une voix a la marque, la ou un
- * grotesque neutre laisserait la page anonyme. Reservee aux titres.
- */
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-  weight: ["500", "600", "700", "800"],
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-sans",
+  weight: "100 900",
 });
 
-/**
- * Le travail d'agence est un travail de registre : references de biens,
- * montants, periodes. Une chasse fixe les aligne et les rend comparables.
- */
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
+const bricolage = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-display",
+  weight: "100 900",
+});
+
+const mono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
   variable: "--font-mono",
-  display: "swap",
-  weight: ["400", "500"],
+  weight: "100 900",
 });
 
 /**
@@ -82,7 +75,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${inter.className} ${bricolage.variable} ${mono.variable}`}>
+      <body className={`${geistSans.className} ${bricolage.variable} ${mono.variable}`}>
         {children}
       </body>
     </html>
