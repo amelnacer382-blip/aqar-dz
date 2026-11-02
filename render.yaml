@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: aqar-dz
+    runtime: docker
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: postgresql://aqar_db_user:YMOfyLro7clJOZUs4fO6Xqk8N4qeyciU@dpg-dbk8ebon74is73bntlp0-a/aqar_db
+      - key: NEXTAUTH_URL
+        value: https://aqar-dz.onrender.com
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://aqar-dz.onrender.com
+      - key: NEXTAUTH_SECRET
+        value: d9b7a1f4c2e6d8a0c4f8b2e1a3d5f7b9a0c2d4e6f8a1b3c5e7d9a0f2b4e6d8a0
+      - key: AUTH_TRUST_HOST
+        value: "true"
+      - key: SUPPORT_EMAIL
+        value: contact@aqar.dz
+      - key: SUPPORT_PHONE
+        value: "0652 67 01 51"
+      - key: SUPPORT_WHATSAPP
+        value: "213652670151"
