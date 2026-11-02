@@ -151,15 +151,3 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
 
-# --- Développement ---
-FROM base AS development
-ENV NODE_ENV=development
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-EXPOSE 3000
-ENV PORT=3000
-# Le port est impose ici, et non laisse au script npm : `npm run dev` fixe
-# 3002 par un drapeau, qui l'emporte sur la variable PORT. Le conteneur
-# ecoutait donc sur 3002 pendant que docker-compose publiait 3000 et que
-# nginx proxifiait vers 3000 — rien ne repondait.
-CMD ["npx", "next", "dev", "-p", "3000"]
